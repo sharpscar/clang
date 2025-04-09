@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/scar/c_workspace/c_lang/miniproject/study/test_mission_0327'
+relocations:     []
+...

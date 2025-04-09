@@ -1,0 +1,47 @@
+int calcuate_discount(struct order *order_ptr,int how_many_menu)
+{
+   
+    int total_cost, discount;
+    bool case1,case2,case3,case4,case5, case_kimra, case_dduktwi;
+
+
+    for (int i=0; i< how_many_menu; i++)
+    {
+        case1 = (order_ptr[i].category == 1) && (order_ptr[i].quentity >= 1);
+        case2 = (order_ptr[i].category == 0) && (order_ptr[i].quentity >= 1);
+        case3 = (order_ptr[i].category == 4) && (order_ptr[i].quentity >= 1);
+        case4 = (order_ptr[i].category == 5) && (order_ptr[i].quentity >= 1);
+        //스페셜 조건 김라떡튀가 무조건 1개 이상 있는경우 2000원 할인
+        case5 = (order_ptr[i].category == 0) && (order_ptr[i].quentity >= 1) &&
+                (order_ptr[i].category == 1) && (order_ptr[i].quentity >= 1) &&
+                (order_ptr[i].category == 4) && (order_ptr[i].quentity >= 1) &&
+                (order_ptr[i].category == 5) && (order_ptr[i].quentity >= 1);
+        
+        total_cost += order_ptr[i].total;
+        
+        if(case5)
+        {   
+            discount = discount +2000;
+            //출력문 [스페셜 할인 2000원!]
+        }
+        else if( case1 && case2)
+        {
+            // case_kimra++;  // 이게 하나당 500씩 할인 
+            discount = discount +500;
+            //출력문 [할인 500원 추가]
+        }else if (case3 && case4)
+        {
+            discount = discount +500;
+            // 출력문 [할인 500원 추가]
+
+        }
+    }
+
+        printf ("총액은 %d 입니다.\n", total_cost);
+        printf ("할인액은 %d 입니다.\n", discount);
+
+        
+        printf ("지불하실 금액은 %d 입니다.\n", total_cost - discount);
+
+    return discount;
+}
