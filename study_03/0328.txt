@@ -1,0 +1,4 @@
+방금 만든 텍스트 파일
+파일의 절대주소 "/home/scar/c_workspace/miniproject/study"
+강의실 절대주소 "주소: 광주광역시 광산구 소촌로152번길 37"
+[EOF]

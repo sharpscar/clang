@@ -1,0 +1,8 @@
+// 주소값들로 이뤄진 배열
+
+int* arr_2d_[3] = {arr_1, arr_2, arr_3};
+
+void arr_show(int** arr)
+{
+    
+}

@@ -1,0 +1,56 @@
+Input Output 
+파일/네트워크와 같은 작업들을 Blocking 그리고 그 반대의 개념이 NONBlocking 입니다.
+
+흐름 1개로 주기적으로 받으려면 2개의 흐름이 한 프로그램에 모여야 합니다.
+2개의 흐름이 1개의 프로그램에 있어야 한다 -> 병렬처리 
+
+병렬처리에는 멀티 프로세싱과 멀티 쓰레드가 있습니다.
+
+프로그램 2개를 동작시키는 방식 멀티 프로세스
+프로그램 하나에 흐름을 추가하는것이 멀티 스레드
+    함수 하나를 똑 떼어서 실행해버림 - 동시 작동!
+
+모든 프로세스는 1개이상의 쓰레드를 갖는다. <-> 그러나 이 반대의 개념은 성립하기 어렵다 1개의 쓰레드는 모든 프로세스를 갖는다(?) 
+
+병렬처리에서 가장 어려운건 타이밍의 문제
+
+부모 프로세스에서는 자식프로세스가 종료 되기까지 기다려야한다.
+wait(&status)
+
+핸들러는 컨트롤러의 의미를 갖는다. 
+
+아래의 함수에서 
+act.sa_handler = timeout 이런 구문은 
+
+함수의 주소를 act구조체의 sa_handler라는 멤버에 할당하는데 
+그렇게 하는 이유는 해당 함수의 실행을 동적으로 실행하기 위해서 이다.
+
+SIGINT 상수 와 SIGCHLD  상수가 있는데
+sigaction 함수에서 컨트롤+D로 강제종료 했을때 
+그리고 정상 종료되었을때 timeout 함수를 호출 하라 이런뜻  - 종료지점을 모른다? 마치 우리가 while문쓰듯이 
+
+
+
+int main(argv[1])
+{
+   
+
+    struct sigaction act;
+    act.sa_handler = timeout; // 주소만 넘김! 함수도 배열화 가능하다!
+    sigemptyset(&act.sa_mask);
+    act.sa_flags =0;
+    /*ctrl +c 가 입력되면 타임아웃을 실행해라! */
+    sigaction(SIGINT, &act, 0); 
+    /*정상종료 되었어도 타임아웃을 실행해라! */
+    sigaction(SIGCHLD, &act, 0);
+    pid_t pid;
+
+    pid =fork();
+    if(pid){
+        sleep(100);
+        printf("종료됨!\n");
+    }else{
+        sleep(3);
+    }
+    return 0;
+}
