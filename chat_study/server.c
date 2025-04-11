@@ -54,7 +54,6 @@ int pushClient(int connfd, char* c_nick, char* c_ip, int c_port){
 }
  
 int popClient(int s)
- 
 
 {
     int i;
@@ -88,7 +87,6 @@ void constr_func(int i,int index){
 // quit
 void quit_func(int i){
  
-
     int j;
     char* token=NULL;
     char buf1[MAXLINE];
@@ -248,7 +246,10 @@ void main(int argc, char *argv[])
             }
         }
         for(i=0; i<MAX_CLIENT;i++){
+
+            //리스트 
             if((list_c[i].socket_num != INVALID_SOCK) && FD_ISSET(list_c[i].socket_num,&rset)){
+
                 memset(chatData, 0, sizeof(chatData));
                 if((n=read(list_c[i].socket_num,chatData, sizeof (chatData)))>0){
                     // 기본 채팅 메세지 보내기
