@@ -31,15 +31,10 @@ int main(int argc, char argvs[])
 int config_read(network_config* config, char* path)
 {
 
-    FILE* in = NULL;
-   
+    FILE* in = NULL;  
     in =  fopen(path, "r");
-    
-
     char* ptr[256];
     char* str[128];
-
-
     // 파일이 안열린다.
     if(in ==0){
         printf("파일을 열 수 없습니다.");

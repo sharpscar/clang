@@ -16,14 +16,6 @@
 
 
 
-
-
-
-
-
-
-
-
 //서버
 void * handle_clnt(void *arg);      //클라이언트 수 체크, 제어
 void send_msg_to_all(char *msg, int len);  //메세지 보내기
@@ -59,15 +51,9 @@ int clnt_cnt=0;
 int clnt_socks[MAX_CLNT];
 pthread_mutex_t mutx;
 
-int serv_sock;
-
-
-
-
-
 int main(int argc, char *argv[])
 {
-    int clnt_sock;
+    int serv_sock, clnt_sock;
     struct sockaddr_in serv_adr, clnt_adr;
     int clnt_adr_sz;
     pthread_t t_id;
@@ -136,6 +122,9 @@ int main(int argc, char *argv[])
             //clnt_sock: 클라이언트 fd정보.
             pthread_create(&t_id, NULL, handle_clnt, (void*)&clnt_sock);    //메세지 보내기
             pthread_create(&t_id, NULL, send_msg_server, (void*)&clnt_sock);
+
+            
+            
             pthread_detach(t_id);         //쓰레드 메모리할당 해제 함수
 
             printf(" Connceted client IP : %s ", inet_ntoa(clnt_adr.sin_addr));     //inet_ntoa함수: 32비트 ip주소를 문자열로 바꿔줌.
@@ -210,7 +199,12 @@ void *handle_clnt(void *arg)
     char msg[BUF_SIZE];
  
     while((str_len= read(clnt_sock, msg, sizeof(msg)))!=0)
+    {
+        // printf("%s", msg);
         send_msg_to_all(msg, str_len);
+
+    }
+        
  
     // remove disconnected client
     pthread_mutex_lock( &mutx );
@@ -236,7 +230,6 @@ void send_msg_to_all(char* msg, int len)
     pthread_mutex_lock(&mutx);
     for (i=0; i<clnt_cnt; i++)
         write(clnt_socks[i], msg, len);
-    write(serv_sock, msg, len);
     pthread_mutex_unlock(&mutx);
 }
  
@@ -310,7 +303,9 @@ void* send_msg_server(void* arg) //쓰레드 안에서 구동하는 메세지 �
         {
             sprintf(name_msg, "%s %s", name,msg);
             write(clnt_socks[i], name_msg, strlen(name_msg));
+
             
+
         }
         
         
