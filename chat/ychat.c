@@ -163,19 +163,28 @@ int main(int argc, char *argv[])
     
         if (argc!=6)    //인자의 갯수가 6개가 아닐 때,
         {
-            printf(" Usage : %s <-s/-c> <-p> <port> <ip> <name>\n", argv[0]);
+            printf("Usage : %s <-s/-c> <-p> <port> <ip> <name>\n", argv[0]);
 
             /**여기서부터 경태코드 
              * conf파일을 읽고
-             * myconf구조체에 아이피,포트,닉네임 정보를 담는다. (1개의 정보)
+             * myconf구조체에 아이피,포트,닉네임 정보를 담는다.
+             * (1개의 정보) 문자열, 문자열, 문자열 
             */
+           printf("여기까지 작동?");
+
             char *path ="./config.conf";
             network_config myconf;                
             config_read(&myconf, path);
 
+            strcpy(argv[3], myconf.port);
+            
+           
+            argv[4]= htons(atoi(myconf.ip));
+            strcpy(argv[5], myconf.nick);
 
+            printf("%s %s %s",argv[3],argv[4],argv[5]);
 
-            exit(1);    //프로그램 실행을 위한 입력방식을 안내하고, 프로그램 종료.
+            // exit(1);    //프로그램 실행을 위한 입력방식을 안내하고, 프로그램 종료.
         }
     
         /** local time **/
