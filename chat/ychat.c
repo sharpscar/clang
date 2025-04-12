@@ -14,12 +14,12 @@
 #define MAX_IP 30
 #define CLEARBUFFER clearbuffer();
 
-
-
-
-
-
-
+// 컨피그정보
+typedef struct Config{
+    char ip[20];
+    char port[10];
+    char nick[100];
+}network_config;
 
 
 
@@ -31,6 +31,9 @@ void error_handling(char *msg);     //에러메시지 출력
 char* serverState(int count);       //서버상태 확인
 void menu(char port[]);             //메뉴 출력
 //클라이언트
+
+/**conf파일을 읽고 구조체에 담는다! ip, port, 닉네임정보 */
+void config_read(network_config* config, char* path);
 void* send_msg_1(void* arg);        //메세지 보내기
 void* recv_msg_1(void* arg);        //메세지 받기
 void error_handling_1(char* msg);   //에러메시지 출력
@@ -161,6 +164,17 @@ int main(int argc, char *argv[])
         if (argc!=6)    //인자의 갯수가 6개가 아닐 때,
         {
             printf(" Usage : %s <-s/-c> <-p> <port> <ip> <name>\n", argv[0]);
+
+            /**여기서부터 경태코드 
+             * conf파일을 읽고
+             * myconf구조체에 아이피,포트,닉네임 정보를 담는다. (1개의 정보)
+            */
+            char *path ="./config.conf";
+            network_config myconf;                
+            config_read(&myconf, path);
+
+
+
             exit(1);    //프로그램 실행을 위한 입력방식을 안내하고, 프로그램 종료.
         }
     
@@ -211,7 +225,8 @@ void *handle_clnt(void *arg)
  
     while((str_len= read(clnt_sock, msg, sizeof(msg)))!=0)
     {
-        printf("%s",msg);
+        printf("testing 214 %s",msg);
+        printf("asdf");
         send_msg_to_all(msg, str_len);
     }   
         
@@ -440,4 +455,41 @@ void error_handling_1(char* msg)
     fputs(msg, stderr);
     fputc('\n', stderr);
     exit(1);
+}
+
+
+void config_read(network_config* config, char* path)
+{
+
+    FILE* in = NULL;
+   
+    in =  fopen(path, "r");
+    
+
+    char* ptr[256];
+    char* str[128];
+
+
+    // 파일이 안열린다.
+    if(in ==0){
+        printf("파일을 열 수 없습니다.");
+        return 0;
+    }else{
+        
+        const int max = 100;
+        char line[max], ip[20], port_[20], nic_name[50];
+        
+    
+        // printf("허허?");
+        fgets(line,max,in);
+        sscanf(line, "%s %s %s", ip, port_,nic_name);
+        // printf("%s\n", line);
+        
+        strcpy(config->ip, ip);
+        
+        strcpy(config->port, port_);
+        
+        strcpy(config->nick, nic_name);          
+    }
+
 }
