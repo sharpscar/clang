@@ -325,6 +325,7 @@ void* send_msg_1(void* arg) //쓰레드 안에서 구동하는 메세지 보내�
     int sock=*((int*)arg);
     char name_msg[NORMAL_SIZE+BUF_SIZE];
     char myInfo[BUF_SIZE];
+    char bye_msg[BUF_SIZE];
     char* who = NULL;
     char temp[BUF_SIZE];
  
@@ -346,6 +347,8 @@ void* send_msg_1(void* arg) //쓰레드 안에서 구동하는 메세지 보내�
  
         else if (!strcmp(msg, "q\n") || !strcmp(msg, "Q\n"))
         {
+            sprintf(bye_msg, "%s's exit. IP_%s\n",name , clnt_ip);
+            write(sock, bye_msg, strlen(bye_msg));
             close(sock);
             exit(0);
         }
