@@ -1,0 +1,202 @@
+SQL 접속시 명령어
+
+
+sudo service mysql start
+sudo mariadb 
+
+use test
+show tables;
+
+select * from dept;
+
+
+ORDER BY 컬럼명
+
+SELECT * FROM EMP LIMIT 5;
+
+SELECT * FROM EMP ORDER BY ENAME LIMIT 3 OFFSET 3;
+LIMIT 최대 출력을 조정 OFFSET 시작지점을 조정 
+
+MariaDB [test]> SELECT * FROM EMP WHERE SAL > 1100 ORDER BY ENAME LIMIT 3 OFFSET 3;
++-------+-------+-----------+------+------------+---------+------+--------+
+| EMPNO | ENAME | JOB       | MGR  | HIREDATE   | SAL     | COMM | DEPTNO |
++-------+-------+-----------+------+------------+---------+------+--------+
+|  7902 | FORD  | ANALYST   | 7566 | 1981-12-03 | 3000.00 | NULL |     20 |
+|  7566 | JONES | MANAGER   | 7839 | 1981-04-02 | 2975.00 | NULL |     20 |
+|  7839 | KING  | PRESIDENT | NULL | 1981-11-17 | 5000.00 | NULL |     10 |
++-------+-------+-----------+------+------------+---------+------+--------+
+3 rows in set (0.000 sec)
+
+MariaDB [test]> SELECT * FROM EMP WHERE SAL > 1100 ORDER BY ENAME;
++-------+--------+-----------+------+------------+---------+---------+--------+
+| EMPNO | ENAME  | JOB       | MGR  | HIREDATE   | SAL     | COMM    | DEPTNO |
++-------+--------+-----------+------+------------+---------+---------+--------+
+|  7499 | ALLEN  | SALESMAN  | 7698 | 1981-02-20 | 1600.00 |  300.00 |     30 |
+|  7698 | BLAKE  | MANAGER   | 7839 | 1981-05-01 | 2850.00 |    NULL |     30 |
+|  7782 | CLARK  | MANAGER   | 7839 | 1981-06-09 | 2450.00 |    NULL |     10 |
+|  7902 | FORD   | ANALYST   | 7566 | 1981-12-03 | 3000.00 |    NULL |     20 |
+|  7566 | JONES  | MANAGER   | 7839 | 1981-04-02 | 2975.00 |    NULL |     20 |
+|  7839 | KING   | PRESIDENT | NULL | 1981-11-17 | 5000.00 |    NULL |     10 |
+|  7654 | MARTIN | SALESMAN  | 7698 | 1981-09-28 | 1250.00 | 1400.00 |     30 |
+|  7934 | MILLER | CLERK     | 7782 | 1982-01-23 | 1300.00 |    NULL |     10 |
+|  7788 | SCOTT  | ANALYST   | 7566 | 1987-07-13 | 3000.00 |    NULL |     20 |
+|  7844 | TURNER | SALESMAN  | 7698 | 1981-09-08 | 1500.00 |    0.00 |     30 |
+|  7521 | WARD   | SALESMAN  | 7698 | 1981-02-21 | 1250.00 |  500.00 |     30 |
++-------+--------+-----------+------+------------+---------+---------+--------+
+11 rows in set (0.000 sec)
+
+
+PK = NULL 금지, 중복금지
+
+SQL DATA TYPE 
+CHAR  최대255 고정된 자료 예 ) 주민번호
+VARCHAR 예) 이름 황금독수리온세상을놀라게하다
+
+DATE 타임
+TIME 타입
+
+TIMESTAMP
+
+유닉스 시간 1970.1.1 을 0으로 생각 
+DATETIME
+
+A == B  -> 값을 비교
+A IS B  -> 주소를 비교 NULL을 비교하려면 IS를 쓴다라고 외우자
+
+START TRANSACTION; // 오토커밋 비활성 
+
+ROLLBACK; <-- 한순간 오토커밋은 활성됨
+
+
+수정!
+UPDATE EMP SET COMM = 100 WHERE COMM IS NULL;
+COMM이 NULL인 행들은 COMM 을 100으로 수정 
+
+UPDATE EMP SET COMM = NULL WHERE COMM =100;
+생각해보니 커미션 100도 아깝다 NULL 로 수정 
+
+수정도 오토커밋 비활성 
+START TRANSACTION;
+
+UPDATE EMP SET COMM = 100;
+모든 사원들의 커미션을 100달러로 수정
+ROLLBACK;
+
+TABLE을 관리하는 SQL
+
+CREATE DATABASE DB명 
+CREATE TABLE 
+DEPT(
+DEPTNO DECIMAL(2), 
+DNAME VARCHAR(14),
+LOC VARCHAR(13), 
+CONSTRAINT PK_DEPT PRIMARY KEY(DEPTNO)
+);
+
+CREATE TABLE TEMP(ID INT NOT NULL, NAME VARCHAR(15));
+템프 테이블을 생성
+(아이디는 비울수없다.
+이름은 널 가능
+)
+
+테이블에 아이디 필드만 넣고 기본값으로 EMPTY를 넣고싶다면
+CREATE TABLE TEMP(ID INT NOT NULL, NAME VARCHAR(15) DEFAULT 'EMPTY');
+테이블을 DEFAULT를 생성하며 NAME필드의 DEFAULT 값을 EMPTY로 
+
+INSERT INTO TEMP (ID) VALUES (1238);
+아디 1238만 넣으면 EMPTY가 자동 입력
+
+이 둘의 경우 CONSTRAINT 사용 불가 
+
+중복불가 옵션을 넣었는데 같은 아이디를 넣으려한경우
+
+MariaDB [test]> INSERT INTO TEMP VALUES (1, 'TEEMO LEE');
+Query OK, 1 row affected (0.008 sec)
+
+MariaDB [test]> INSERT INTO TEMP VALUES (1, 'TEEMO LEE2');
+ERROR 1062 (23000): Duplicate entry '1' for key 'ID'
+
+
+중복검사를 하기위한 테이블은 따로 만든다
+예를 들어 이진 탐색 알고리즘을 활용한
+이진트리 
+
+CHECK 
+사전에 조건을 주어 참인경우에만 허용한다.
+
+테이블간의 관계를 만들고 테이블로 나누는것을 정규화 한다고
+말한다. (NORMALIZATION);
+
+테이블을 만든다!
+CREATE TABLE TEMP(ID INT NOT NULL, NAME VARCHAR(15) DEFAULT 'EMPTY');
+나이 필드를 추가한다 (기존의 데이터는 AGE가 없기때문에 DEFAULT를 넣어준다)
+ALTER TABLE TEMP ADD COLUMN AGE INT DEFAULT 20 CHECK(AGE>0);
+
+전화번호 필드를 추가한다.
+ALTER TABLE TEMP ADD COLUMN PHONE_NUMBER VARCHAR(17) UNIQUE;
+
+나이 필드를 제거한다.
+ALTER TABLE TEMP DROP COLUMN AGE;
+
+ALTER TABLE TEMP DROP CONSTRAINT UNI_PN;
+
+대소문자를 변환
+SELECT LOWER('WOW IT\'S GOODIDEA');
+
+2부터 4개를 뿌려라
+SELECT SUBSTR('123456',2,4);
+
+2의 위치를 뱉는다.
+SELECT INSTR('REFERENCE', 'E');
+
+LPAD, RPAD 
+1234를 총7자로 만들고 왼쪽에 A로 채워라
+SELECT LPAD('1234', 7, 'A');
+
+SELECT CONCAT('HELLO ','WORLD! ', 'HAHA');
+
+SELECT CONCAT('HELLO ','WORLD! ', 'HAHA ', 'HOOHA');
+
+
+SELECT REPLACE ('123456','123','ABC');
+ABC456
+
+SELECT CEIL(3.141592);
+4
+SELECT FLOOR(3.141592);
+3
+
+랜덤하게 1~6까지 나옴
+SELECT FLOOR(RAND()*6)+1;
+
+SYSDATE()와  NOW()의 차이
+트랜잭션 안에서 실행된 각각의 시간을 반환
+
+NOW 현재시간 
+SELECT DATE_FORMAT(NOW(), '%Y년%m월%d일');
+
+SELECT DATE_FORMAT(NOW(), '%H시, %m월 %d일 / %y년');
+
+컬럼명을 내가 원하는대로 출력하고자한다면 AS를 쓸수있다
+SELECT ENAME AS '이름', JOB AS '직업' FROM EMP;
+
+연봉 2천만원 이하 몇명인가?
+SELECT  COUNT(*) FROM EMP WHERE SAL <2000;
+
+표준편차와 분산
+표준편차 :분산의 제곱근
+분산 :표준편차의 제곱 
+
+SELECT DEPTNO, AVG(SAL) FROM EMP GROUP BY DEPTNO;
+
+부서별로 4명 이상인 부서를 부서번호로 그룹지어 부서번호, 평균급여를 출력
+SELECT DEPTNO, AVG(SAL) FROM EMP GROUP BY DEPTNO HAVING COUNT(DEPTNO) >4;
+
+부서번호, 평균 을 출력 부서번호로 그룹짓고 그룹의 평균급여가 2천이상인
+SELECT DEPTNO, AVG(SAL) AS AVG_SAL FROM EMP 
+    -> GROUP BY DEPTNO HAVING AVG_SAL > 2000;
+
+부서별로 4명 이상 부서번호로 그룹짓는다. (급여가 1천 이상인 조건)
+SELECT DEPTNO, AVG(SAL) FROM EMP WHERE SAL > 1000
+    -> GROUP BY DEPTNO HAVING COUNT(DEPTNO) >4;
+

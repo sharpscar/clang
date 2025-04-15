@@ -6,7 +6,13 @@
         "types.h": "c",
         "wait.h": "c",
         "unistd.h": "c",
-        "in.h": "c"
+        "in.h": "c",
+        "stdio.h": "c",
+        "string": "c",
+        "typeinfo": "c",
+        "struct_member.h": "c",
+        "cjson.h": "c",
+        "string.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -20,8 +20,8 @@
 
 typedef struct Config{
     char ip[20];
-    char port[10];
-    char nick[100];
+    char port[NORMAL_SIZE];
+    char nick[NORMAL_SIZE];
 }network_config;
 
 
@@ -63,6 +63,11 @@ char serv_time[NORMAL_SIZE];           // server time
 char msg[BUF_SIZE];                    // msg
 char serv_port[NORMAL_SIZE];           // server port number
 char clnt_ip[NORMAL_SIZE];             // client ip address
+char clnt_name[NORMAL_SIZE];
+char name_buffer[NORMAL_SIZE];
+
+char names[MAX_CLNT];
+
  
 int clnt_cnt=0;
 int clnt_socks[MAX_CLNT];
@@ -71,11 +76,8 @@ pthread_mutex_t mutx;
 int serv_sock;
 
 
+int main(int argc, char *argv[]){
 
-
-
-int main(int argc, char *argv[])
-{
     int clnt_sock;
     struct sockaddr_in serv_adr, clnt_adr;
     int clnt_adr_sz;
@@ -83,7 +85,7 @@ int main(int argc, char *argv[])
     char choice[100];
 
 
-    //서버일때
+    //서버일때`
     if (strcmp(argv[1], "-s") == 0){
 
         int serv_sock, clnt_sock;
@@ -102,8 +104,7 @@ int main(int argc, char *argv[])
         t=localtime(&timer);
      
 
-        if (argc != 4)  //인자갯수가 올바르지 않다면,
-        {
+        if (argc != 4){  //인자갯수가 올바르지 않다면,
             printf(" Usage : %s <-s/-c> <-p> <portnum>\n", argv[0]);    //최초실행시 argv[0]은 server_c(실행파일 이름)
             exit(1);    //프로그램 실행을 위한 입력방식을 안내하고, 프로그램 종료.
         }
@@ -130,16 +131,15 @@ int main(int argc, char *argv[])
         if (listen(serv_sock, 5)==-1)       
             error_handling("listen() error");
         
-        
-        while(1)
-        {
-
+        while(1){
             clnt_adr_sz=sizeof(clnt_adr);
             //[4] accept - 수신연결요청 수락상태로 설정.
-            clnt_sock= accept(serv_sock, (struct sockaddr*)&clnt_adr, &clnt_adr_sz);     
+            clnt_sock= accept(serv_sock, (struct sockaddr*)&clnt_adr, &clnt_adr_sz);
 
             pthread_mutex_lock(&mutx);
             clnt_socks[clnt_cnt++]=clnt_sock;   //clnt_socks 배열에 clnt_sock 정보 저장.
+
+            
             pthread_mutex_unlock(&mutx);
             
             //clnt_sock: 클라이언트 fd정보.
@@ -149,12 +149,8 @@ int main(int argc, char *argv[])
 
             printf(" Connceted client IP : %s ", inet_ntoa(clnt_adr.sin_addr));     //inet_ntoa함수: 32비트 ip주소를 문자열로 바꿔줌.
             printf(" chatter (%d/100)\n", clnt_cnt);    //클라이언트 수 카운트 후 출력.
-
-
         }
 
-
-    
         close(serv_sock);
         return 0;
     }
@@ -165,10 +161,10 @@ int main(int argc, char *argv[])
         struct sockaddr_in serv_addr;     //서버주소
         pthread_t snd_thread, rcv_thread; //send쓰레드, receive쓰레드
         void* thread_return;              //쓰레드 리턴
-        char port[10], ip[30], nick[100];
+        char port[10], ip[NORMAL_SIZE], nick[NORMAL_SIZE];
         network_config myconf;
-        printf("인자의 갯수! %d",argc);
-        if (argc!=6)    //인자의 갯수가 6개가 아닐 때,
+
+        if (strcmp(argv[2], "-p") != 0 || argc!=6)    //인자의 갯수가 6개가 아닐 때,
         {
             char answer[1];
 
@@ -177,8 +173,7 @@ int main(int argc, char *argv[])
             scanf("%c", answer);
             
             //유저가 conf파일 사용을 원함
-            if(strcmp(answer, "y")==0)
-            {
+            if(strcmp(answer, "y")==0){
             
                 char *path ="./config.conf";
                 network_config myconf;    
@@ -192,29 +187,20 @@ int main(int argc, char *argv[])
                 strcpy(ip, myconf.ip);
                 strcpy(nick, myconf.nick);
 
+
             }
             else{
                  //유저가 conf파일 사용을 원치 않음
                 printf(" Usage : %s <-s/-c> <-p> <port> <ip> <name>\n", argv[0]);
                 exit(1);
-
             }
 
         //인자가 우리가 설계한 대로 매개변수를 다 입력했을시에
         }else{
-            
-            //여기서 만약에  ./cc -c 127.0.0.1 -p 8000 닉네임 처럼 갯수는 6개지만 순서가 안맞을땐  65500
-            if(strlen(argv[3]) >= 6)
-            {
-                printf("여기로 온거 아닌가?");
-                printf(" Usage : %s <-s/-c> <-p> <port> <ip> <name>\n", argv[0]);
-                exit(1);
-
-            }
-
             strcpy(port, argv[3]);
             strcpy(ip, argv[4]);
             strcpy(nick, argv[5]);
+            strcpy(clnt_name, nick);
         }
     
         /** local time **/
@@ -224,9 +210,9 @@ int main(int argc, char *argv[])
         sprintf(serv_time, "%d-%d-%d %d:%d", t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour,
         t->tm_min);
     
-        sprintf(name, "[%s]", nick);         //argv[5]번인 이름을 버퍼에 출력한다.
-        sprintf(clnt_ip, "%s", ip);        //argv[4]  ~  ip번호    ~
-        sprintf(serv_port, "%s", port);      //argv[3]  ~  포트번호   ~
+        sprintf(name, "[%s]", argv[5]);            //argv[5]번인 이름을 버퍼에 출력한다.
+        sprintf(clnt_ip, "%s", ip);             //argv[4]  ~  ip번호    ~
+        sprintf(serv_port, "%s", port);         //argv[3]  ~  포트번호   ~
         sock=socket(PF_INET, SOCK_STREAM, 0);   //socket함수를 통해 socket을 생성.
     
         memset(&serv_addr, 0, sizeof(serv_addr));     //서버주소를 모두 0으로 초기화.
@@ -264,13 +250,11 @@ void *handle_clnt(void *arg)
  
     while((str_len= read(clnt_sock, msg, sizeof(msg)))!=0)
         send_msg_to_all(msg, str_len);
- 
+
     // remove disconnected client
     pthread_mutex_lock( &mutx );
-    for (i=0; i<clnt_cnt; i++)
-    {
-        if (clnt_sock == clnt_socks[i])
-        {
+    for (i=0; i<clnt_cnt; i++){
+        if (clnt_sock == clnt_socks[i]){
             while( i++ < clnt_cnt-1 )
                 clnt_socks[i] = clnt_socks[i+1];
             break;
@@ -322,11 +306,7 @@ void menu(char port[])  //argv의 포트번호를 전달받는다.
     printf(" max connection : %d\n", MAX_CLNT);
     printf(" ****          Log         ****\n\n");
 
-
-
-    
 }
-
 
 void* send_msg_server(void* arg) //쓰레드 안에서 구동하는 메세지 보내기 함수.
 {
@@ -339,7 +319,13 @@ void* send_msg_server(void* arg) //쓰레드 안에서 구동하는 메세지 �
     /** send join messge **/
     printf(" >> join the chat !! \n");
     sprintf(myInfo, "%s's join. IP_%s\n",name , clnt_ip);
+
+    /* 배열에 name을 담자!*/    
+    // strcpy(names[clnt_cnt], name);
+
     write(sock, myInfo, strlen(myInfo));
+
+
  
     while(1)
     {
@@ -384,17 +370,16 @@ void* send_msg_1(void* arg) //쓰레드 안에서 구동하는 메세지 보내�
     char temp[BUF_SIZE];
  
     /** send join messge **/
-    printf(" >> join the chat !! \n");
+    printf(" %s joined the chat !! \n", name);
     sprintf(myInfo, "%s's join. IP_%s\n",name , clnt_ip);
     write(sock, myInfo, strlen(myInfo));
+
  
-    while(1)
-    {
+    while(1){
         fgets(msg, BUF_SIZE, stdin);
  
         // menu_mode command -> !menu
-        if (!strcmp(msg, "!menu\n"))    //msg는 입력.
-        {
+        if (!strcmp(msg, "!menu\n")){    //msg는 입력.
             menuOptions_1();
             continue;
         }
@@ -403,6 +388,7 @@ void* send_msg_1(void* arg) //쓰레드 안에서 구동하는 메세지 보내�
         {
             sprintf(bye_msg, "%s's exit. IP_%s\n",name , clnt_ip);
             write(sock, bye_msg, strlen(bye_msg));
+            write(clnt_socks[0], bye_msg, strlen(bye_msg));
             close(sock);
             exit(0);
         }
@@ -410,6 +396,7 @@ void* send_msg_1(void* arg) //쓰레드 안에서 구동하는 메세지 보내�
         // send message
         sprintf(name_msg, "%s %s", name,msg);
         write(sock, name_msg, strlen(name_msg));
+        
     }
     return NULL;
 }
@@ -430,7 +417,6 @@ void* recv_msg_1(void* arg)
     }
     return NULL;
 }
- 
  
 void menuOptions_1() 
 {
@@ -463,14 +449,13 @@ void menuOptions_1()
     }
 }
  
- 
 /** change user name **/
 void changeName_1()
 {
-    char nameTemp[100];
+    char nameTemp[19];
     printf("\n\tInput new name -> ");
     scanf("%s", nameTemp);
-    sprintf(name, "[%s]", nameTemp);
+    snprintf(name, sizeof(name) +1, "[%s]", nameTemp);
     printf("\n\tComplete.\n\n");
 }
  
@@ -497,7 +482,6 @@ void error_handling_1(char* msg)
     exit(1);
 }
 
-
 void config_read(network_config* config, char* path)
 {
 
@@ -505,7 +489,6 @@ void config_read(network_config* config, char* path)
     in =  fopen(path, "r");
     char* ptr[256];
     char* str[128];
-    // 파일이 안열린다.
     if(in ==0){
         printf("파일을 열 수 없습니다.");
         exit(1);
@@ -515,16 +498,16 @@ void config_read(network_config* config, char* path)
         char line[max], ip[20], port_[20], nic_name[50];
         
     
-        // printf("허허?");
         fgets(line,max,in);
         sscanf(line, "%s %s %s", ip, port_,nic_name);
-        // printf("%s\n", line);
         
         strcpy(config->ip, ip);
         
         strcpy(config->port, port_);
         
-        strcpy(config->nick, nic_name);          
+        strcpy(config->nick, nic_name);   
+        
+        fclose(in);       
     }
 
 }

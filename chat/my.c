@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
     int clnt_adr_sz;
     pthread_t t_id;
     char choice[100];
+    printf("인자의 갯수! %d",argc);
 
 
     //서버일때
@@ -167,7 +168,6 @@ int main(int argc, char *argv[])
         void* thread_return;              //쓰레드 리턴
         char port[10], ip[30], nick[100];
         network_config myconf;
-        printf("인자의 갯수! %d",argc);
         if (argc!=6)    //인자의 갯수가 6개가 아닐 때,
         {
             char answer[1];
@@ -202,15 +202,7 @@ int main(int argc, char *argv[])
 
         //인자가 우리가 설계한 대로 매개변수를 다 입력했을시에
         }else{
-            
-            //여기서 만약에  ./cc -c 127.0.0.1 -p 8000 닉네임 처럼 갯수는 6개지만 순서가 안맞을땐  65500
-            if(strlen(argv[3]) >= 6)
-            {
-                printf("여기로 온거 아닌가?");
-                printf(" Usage : %s <-s/-c> <-p> <port> <ip> <name>\n", argv[0]);
-                exit(1);
-
-            }
+          
 
             strcpy(port, argv[3]);
             strcpy(ip, argv[4]);
