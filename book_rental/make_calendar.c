@@ -7,11 +7,11 @@ typedef struct {
     char date[100];
     char day_[50];
     int is_open;  // 1이면 영업 0이면 휴일
-}bussiness_month_4;
+}bussiness_month;
 
 void solution(int a, int b, char *c);
 char *  get_current_time();
-void is_open_now(bussiness_month_4 *m4);
+void is_open_now(bussiness_month *m4);
 int main()
 {
     /*
@@ -25,7 +25,7 @@ int main()
     is_open_now()
     */
 
-    bussiness_month_4 m4[32];
+    bussiness_month m4[32];
 
     set_calendar(m4); // m4를 달력 객체로 만들고    
     
@@ -50,7 +50,7 @@ int main()
     return 0;
 }
 
-int is_open_now(bussiness_month_4 *m4)
+int is_open_now(bussiness_month *m4)
 {
     int flag=0;
 
@@ -98,7 +98,7 @@ int is_open_now(bussiness_month_4 *m4)
    
 }
 
-void is_open_for_business(bussiness_month_4 *m4)
+void is_open_for_business(bussiness_month *m4)
 {
     int a,b;
     printf("영업일인지 알아볼 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
@@ -133,7 +133,7 @@ void is_open_for_business(bussiness_month_4 *m4)
     }
 }
 
-void set_holyday(bussiness_month_4 *m4)
+void set_holyday(bussiness_month *m4)
 {
 
     int a,b;
@@ -160,7 +160,7 @@ void set_holyday(bussiness_month_4 *m4)
     
 }
 
-void set_work_day(bussiness_month_4 *m4)
+void set_work_day(bussiness_month *m4)
 {
 
     int a,b;
@@ -216,7 +216,7 @@ char *  get_current_time()
 
 }
 
-void set_calendar(bussiness_month_4 *m4)
+void set_calendar(bussiness_month *m4)
 {
 
     // bussiness_month_4 m4[32];
