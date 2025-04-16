@@ -7,7 +7,7 @@ typedef struct {
     char date[100];
     char day_[10];
     int is_open;  // 1이면 영업 0이면 휴일
-}bussiness_month_4
+}bussiness_month_4;
 
 
 

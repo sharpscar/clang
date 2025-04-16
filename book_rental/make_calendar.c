@@ -8,48 +8,155 @@ typedef struct {
     char day_[50];
     int is_open;  // 1이면 영업 0이면 휴일
 }bussiness_month_4;
+
 void solution(int a, int b, char *c);
-void  get_current_time(char *current);
+char *  get_current_time();
 int main()
 {
     /*
-    get_current_time() 함수로 현재시간을 가져온다.     
-    set_calendar () // 달력 [30] 객체를 리턴 <-- 이걸 이용해서 휴일을 지정할수 있습니다.  
-    set_holiday()  <-- 만든 달력 객체에 휴일을 설정할수 있습니다. 
+    get_current_time() 함수로 현재시간을 가져온다.   
+    set_calendar () // 달력 [30] 객체를 리턴 <-- 이걸 이용해서 휴일을 지정할수 있습니다. 
 
-    is_open_for_business() <-- 만든 달력 객체를 활용해서 영업일인지 휴일인지 판별하는 함수입니다.    
+    set_holiday(날짜정보)  <-- 만든 달력 객체에 휴일을 설정할수 있습니다. 
+    set_workday(m4)
+    
+    is_open_for_business(날짜정보) <-- 만든 달력 객체를 활용해서 영업일인지 휴일인지 판별하는 함수입니다.    
 
     */
 
     bussiness_month_4 m4[32];
 
-    set_calendar(m4); // m4를 달력 객체로 만들고  
-    char current[30];
-    get_current_time(current);
-    printf("현재 날짜 %s", current);
-    // free(current);
+    set_calendar(m4); // m4를 달력 객체로 만들고    
+    
+    char current[50];
+    strcpy(current,  get_current_time());
+
+    printf("현재 날짜 시간은 : %s\n", current);
+
+    // set_holyday(m4);
+    // set_work_day(m4);
+    is_open_for_business(m4);  // 영업일인지 확인하는 함수
+
 
     return 0;
 }
 
-void  get_current_time(char *current)
+void is_open_for_business(bussiness_month_4 *m4)
+{
+    int a,b;
+    printf("영업일인지 알아볼 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
+    scanf("%d %d", &a, &b);
+
+    char date_[50];
+    sprintf(date_, "2025-%d-%d",a,b);
+
+    if(a != 4)
+    {
+        printf("4월만 가능합니다 5월은 아직 기능이 완료되지 않았습니다.");
+    }
+
+    for(int i=0; i< 31; i++)
+    {
+        
+        // printf("%s\n", m4[i].date);
+        if(strcmp(m4[i].date, date_)==0)
+        {
+            
+            if(m4[i].is_open ==1)
+            {
+                printf("%s 일은 영업일입니다.", m4[i].date);
+            }
+            else{
+                printf("%s 일은 휴일입니다.", m4[i].date);
+
+            }
+            
+
+        }
+    }
+}
+
+void set_holyday(bussiness_month_4 *m4)
+{
+
+    int a,b;
+    int tmp=0;
+    printf("휴일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
+    scanf("%d %d", &a, &b);
+
+    char date_[50];
+    sprintf(date_, "2025-%d-%d",a,b);
+    
+    for(int i=0; i< 31; i++)
+    {
+        
+        // printf("%s\n", m4[i].date);
+        if(strcmp(m4[i].date, date_)==0)
+        {
+            // printf("%s %s\n",m4[i].date, date_);
+            m4[i].is_open = 0;
+            printf("%s를 휴일로 설정 완료!\n", m4[i].date);
+            
+
+        }
+    }
+    
+}
+
+void set_work_day(bussiness_month_4 *m4)
+{
+
+    int a,b;
+    printf("업무일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
+    scanf("%d %d", &a, &b);
+
+    char date_[50];
+    sprintf(date_, "2025-%d-%d",a,b);
+    
+    for(int i=0; i< 31; i++)
+    {
+        // printf("%s\n", m4[i].date);
+        if(strcmp(m4[i].date, date_)==0)
+        {
+            // printf("%s %s\n",m4[i].date, date_);
+            m4[i].is_open = 1;
+            printf("%s를 업무일로 설정 완료!\n", m4[i].date);
+            
+
+        }
+    }
+}
+
+
+char *  get_current_time()
 {
 
     time_t t= time(NULL);
     struct tm tm_ = *localtime(&t);
-    current = (char*)malloc(sizeof(char)*10);
+//    current = (char*)malloc(sizeof(char)*10);
     // memset(current, 0, sizeof(current));
     char str_t[100];
-    sprintf(current,"%d-%d-%d %d:%02d:%02d", 
+    char *current;
+    char yoil[10];
+
+    solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
+    // printf("ttttttttttttttttttttttttt%s", yoil);
+    sprintf(str_t,"%d-%d-%d %d:%02d:%02d, %s요일", 
                 tm_.tm_year+1900,
                 tm_.tm_mon+1,
                 tm_.tm_mday,
                 tm_.tm_hour,
                 tm_.tm_min,
-                tm_.tm_sec);
-    printf("%s", current);
+                tm_.tm_sec,
+                yoil
+            );
 
-    
+    // printf("%s", str_t);
+    current = &str_t;
+    // strcpy(*current, str_t);
+    // printf("%s", current);
+
+    return current;
 
 }
 
