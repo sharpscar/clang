@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include <string.h>
 #include <time.h>
 
 typedef struct {
@@ -11,6 +11,7 @@ typedef struct {
 
 void solution(int a, int b, char *c);
 char *  get_current_time();
+void is_open_now(bussiness_month_4 *m4);
 int main()
 {
     /*
@@ -21,7 +22,7 @@ int main()
     set_workday(m4)
     
     is_open_for_business(날짜정보) <-- 만든 달력 객체를 활용해서 영업일인지 휴일인지 판별하는 함수입니다.    
-
+    is_open_now()
     */
 
     bussiness_month_4 m4[32];
@@ -31,14 +32,70 @@ int main()
     char current[50];
     strcpy(current,  get_current_time());
 
-    printf("현재 날짜 시간은 : %s\n", current);
+    is_open_now(m4);
+    // printf("%s", current);   
+    
+    // 1. 금일이 영업일이면 ok 영업일이 아니면 False
+    // 2. 현재시간이 09~18시 이면 ok 
+    // 1과 2가 통과되면 영업ok  is_open_now()?
+
+
+    // printf("현재 날짜 시간은 : %s\n", current);
 
     // set_holyday(m4);
     // set_work_day(m4);
-    is_open_for_business(m4);  // 영업일인지 확인하는 함수
+    // is_open_for_business(m4);  // 영업일인지 확인하는 함수
 
 
     return 0;
+}
+
+int is_open_now(bussiness_month_4 *m4)
+{
+    int flag=0;
+
+    time_t t= time(NULL);
+    struct tm tm_ = *localtime(&t);
+    char str_t[100];
+    char *current;
+    char yoil[10];
+
+    solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
+    
+    sprintf(str_t,"%d-%d-%d", 
+                tm_.tm_year+1900,
+                tm_.tm_mon+1,
+                tm_.tm_mday                
+            );
+    
+
+        
+    //해당 날짜가 영업일인가? 맞으면 flag =1
+    for(int i=0; i<31;i++)
+    {
+        
+        if(strcmp(m4[i].date, str_t)==0)
+        {
+            if(m4[i].is_open ==1)
+            {
+                flag = 1;
+        
+            }else{
+                flag = 0;
+        
+            }
+        }
+    }
+    // 현재 시간이 8~18시 사이인가? 맞으면 1 틀리면 0
+    if ( (tm_.tm_hour > 8) &&(tm_.tm_hour < 18))
+    {
+        flag = 1;
+    }else{
+        flag = 0;
+    }   
+    // printf("%d",flag);
+    return flag;
+   
 }
 
 void is_open_for_business(bussiness_month_4 *m4)
@@ -141,14 +198,13 @@ char *  get_current_time()
 
     solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
     // printf("ttttttttttttttttttttttttt%s", yoil);
-    sprintf(str_t,"%d-%d-%d %d:%02d:%02d, %s요일", 
+    sprintf(str_t,"%d-%d-%d %d:%02d:%02d", 
                 tm_.tm_year+1900,
                 tm_.tm_mon+1,
                 tm_.tm_mday,
                 tm_.tm_hour,
                 tm_.tm_min,
-                tm_.tm_sec,
-                yoil
+                tm_.tm_sec
             );
 
     // printf("%s", str_t);
