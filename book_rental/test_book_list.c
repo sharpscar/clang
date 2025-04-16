@@ -33,8 +33,7 @@ int main()
 
     // int book_size = 10000;  배열선언은 무조건 상수로 싫으면 malloc
     books b[BOOK_SIZE];
-
-    // memset(b,0,sizeof(books));
+    
     // printf("허허");
     store_to_struct(b);
     
@@ -57,7 +56,7 @@ void store_to_struct(books *b)
     
     int array_size = cJSON_GetArraySize(json_array);  
     
-    // memset(b,0,sizeof(books)*book_size);
+    memset(b,0,sizeof(books)*array_size);
     
     for(int i=0; i<array_size;i++)
     {
