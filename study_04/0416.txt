@@ -1,0 +1,114 @@
+SELECT * FROM EMP 
+LEFT OUTER JOIN 
+DEPT ON EMP.DEPTNO = DEPT.DEPTNO
+
+
+SELECT * FROM EMP 
+AS A LEFT JOIN DEPT 
+AS B 
+ON A.DEPTNO = B.DEPTNO;
+
+쿼리를 기준으로 왼측에 있는 TABLE을 기준으로 합집합을 형성
+
+SELECT * FROM EMP 
+RIGHT OUTER JOIN DEPT
+ON EMP.DEPTNO = DEPT.DEPTNO;
+
+
+SELECT DISTINCT DEPTNO FROM EMP;
+
+DEPT에는 4개의 항목만 있다.?
+
+좌측엔 EMP 우측엔 DEPT 가 있는데
+LEFT JOIN을 하면 EMP테이블을 기준으로 JOIN
+RIGHT JOIN을 하면 DEPT 테이블을 기준으로 JOIN 
+그러므로 RIGHT조인의 결과에는
+DEPTNO가 40인 NULL값을 갖는 레코드가 있다.
+
+SELECT * FROM EMP 
+NATURAL JOIN DEPT;
+결과가 깔끔하다.
+
+서브쿼리
+쿼리 안에 또다른 쿼리를 넣는다. 느낌적으로 생각보다 유용할거같다. 
+
+SELECT * FROM EMP WHERE SAL =
+(SELECT MAX(SAL) FROM EMP);
+급여 최고를 받는 사람을 EMP에서 가져와라
+
+
+SELECT * FROM EMP WHERE DEPTNO = 
+(SELECT DEPTNO FROM EMP WHERE ENAME = 'ALLEN');
+앨런과 같은DEPT 번호를 갖고있는 사원들 정보를 뽑아라
+
+
+ALLEN과 부서가 같은 사원들의 사원명, 입사일을 출력하되 
+높은 급여순으로 출력
+
+SELECT ENAME AS 사원명, HIREDATE AS 입사일
+FROM EMP WHERE DEPTNO =  
+(SELECT DEPTNO FROM EMP WHERE ENAME = 'ALLEN') 
+ORDER BY SAL DESC ;
+
+
+
+
+킹처럼 돈젤많이 받는데 입사일이 킹보다 늦은사람
+SELECT ENAME AS '이름', HIREDATE AS '입사일' FROM EMP WHERE HIREDATE >(SELECT HIREDATE FROM EMP WHERE SAL =(SELECT MAX(SAL) FROM EMP));
+
+FORD보다 입사일이 늦은 사원중 급여가 가장 높은 사원의 이름과 급여를 출력
+(SELECT ENAME AS 이름,  MAX(SAL) AS 급여  
+FROM EMP WHERE HIREDATE > 
+(SELECT HIREDATE FROM EMP WHERE ENAME ='FORD'));
+틀린 구문이다 집계함수의 함정
+
+
+아래의 구문이 최대한 근접한 답이다.
+SELECT ENAME AS '이름', SAL AS '급여' FROM 
+(SELECT * FROM EMP WHERE HIREDATE > 
+(SELECT HIREDATE FROM EMP WHERE ENAME = 'FORD')) AS TMP 
+ORDER BY SAL DESC LIMIT 1;
+
+EMP테이블에서 가장 많은 사원이 속해있는 부서번호와 사원수 출력 
+SELECT * FROM (SELECT DEPTNO AS '부서번호', COUNT(DEPTNO) AS '사원수' 
+    -> FROM EMP GROUP BY DEPTNO) AS TMP
+    -> ORDER BY 사원수 DESC LIMIT 1;
+
+
+SCOTT 의 급여에서 1000을 뺀 급여보다 적게 받는 사원의 이름 급여출력
+SELECT ENAME AS '성함', SAL AS '급여 ' 
+FROM EMP 
+WHERE SAL <(SELECT SAL-1000 FROM EMP WHERE ENAME ='SCOTT') 
+ORDER BY SAL ASC;
+
+JOB이 MANAGER인 사원들 중에 최소 급여를 받는 사원보다 급여가 적은
+사원의 이름 급여 부서명 출력
+
+SELECT ENAME AS '이름', SAL AS '급여', DNAME AS '부서명'  
+FROM EMP NATURAL JOIN DEPT 
+WHERE SAL <(SELECT MIN(SAL)AS SAL FROM EMP WHERE JOB = 'MANAGER') 
+ORDER BY 급여 ASC;
+
+
+SELECT DNAME AS '부서명', ENAME AS '사원명', HIREDATE AS '입사일' 
+FROM EMP NATURAL JOIN DEPT  
+WHERE HIREDATE=
+(SELECT MIN(HIREDATE) FROM EMP WHERE COMM IS NULL);
+커미션이 없는 사원중 입사일이 가장 빠른 사원의 부서명 사원명 입사일 출력; [꼼수 쓰면 사형!]
+
+SELECT DNAME AS 부서명, ENAME AS 사원명, HIREDATE AS 입사일   
+FROM EMP NATURAL JOIN DEPT WHERE COMM IS NULL ORDER BY HIREDATE ASC LIMIT 1;
+
+
+
+
+'CLARK'씨가 속한 부서의 평균급여보다 높은 급여를 받는 사원들 중 입사일이 가장 빠른
+부서명 사원명 급여 출력
+
+SELECT DNAME AS '부서명', ENAME AS '사원명', SAL AS '급여'  
+FROM EMP NATURAL JOIN DEPT 
+WHERE SAL >(SELECT AVG(SAL) AS SAL 
+FROM EMP WHERE DEPTNO = (SELECT DEPTNO FROM EMP WHERE ENAME = 'CLARK')) 
+ORDER BY HIREDATE
+LIMIT 1;
+
