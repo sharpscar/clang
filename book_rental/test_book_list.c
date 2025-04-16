@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cjson/cJSON.h"
-
+#define BOOK_SIZE 10000
 #include <string.h>
 
-char *read_json_file(const char *filename);
+/**
+ * NULL 0  없음 구분해라 
+ * 매개변수에 포인터 넣을때 배열은 기본 포인터인데 &로 넣으면 포인터의 포인터주소가 가버리는문제가
+ *
+ */
 
-typedef struct book {
+typedef struct {
+    int no;
     char isbn[50];
     char name[50];
     char writer[50] ;
@@ -19,33 +24,47 @@ typedef struct book {
     int frequency_rental ;
 }books;
 
+void store_to_struct(books *b );
+char *read_json_file(const char *filename);
 
 int main()
 {
-
     
 
+    // int book_size = 10000;  배열선언은 무조건 상수로 싫으면 malloc
+    books b[BOOK_SIZE];
+
+    // memset(b,0,sizeof(books));
+    // printf("허허");
+    store_to_struct(b);
     
+}
+
+void store_to_struct(books *b)
+{
+    printf("허허");
     char *json_string = read_json_file("books.json");
     if(!json_string){
-        return 1;
+        printf("jsonfile 읽다가 문제생김");
     }   
+
     cJSON * json_array = cJSON_Parse(json_string);
     if(!json_array ||!cJSON_IsArray(json_array)){
         printf("JSON 파싱 실패 또는 배열이 아님\n");
-        free(json_string);
-        return 1;
+        
+        exit(1);
     }
-
-    int array_size = cJSON_GetArraySize(json_array);
-    struct book books[array_size];
-    memset(&books,0,sizeof(books));
+    
+    int array_size = cJSON_GetArraySize(json_array);  
+    
+    // memset(b,0,sizeof(books)*book_size);
     
     for(int i=0; i<array_size;i++)
     {
         cJSON *book = cJSON_GetArrayItem(json_array, i);
         if(!cJSON_IsObject(book)) continue;
 
+        cJSON *no = cJSON_GetObjectItemCaseSensitive(book,"No");
         cJSON *isbn = cJSON_GetObjectItemCaseSensitive(book,"ISBN");
         cJSON *name = cJSON_GetObjectItemCaseSensitive(book, "제목");
         cJSON *writer = cJSON_GetObjectItemCaseSensitive(book, "저자");
@@ -58,39 +77,40 @@ int main()
         cJSON *topic = cJSON_GetObjectItemCaseSensitive(book,"KDC 주제명");
         cJSON *frequency_rental = cJSON_GetObjectItemCaseSensitive(book,"대출 빈도");
 
-    //    strcpy(books[i].name , name);
-    //    printf("%s\n",name->valuestring);
-        strcpy(books[i].isbn, isbn->valuestring);
+        b[i].no = no->valueint;
+        // printf("허허");
+        strcpy(b[i].name , name->valuestring);
+        printf("%s\n",name->valuestring);
+        strcpy(b[i].isbn, isbn->valuestring);
         
-        strcpy(books[i].name, name->valuestring);
-        strcpy(books[i].publisher, publisher->valuestring);
-        strcpy(books[i].writer, writer->valuestring);
-        books[i].year = year->valueint;
-        printf("%d년도 \n",books[i].year);
+        strcpy(b[i].name, name->valuestring);
+        strcpy(b[i].publisher, publisher->valuestring);
+        strcpy(b[i].writer, writer->valuestring);
+        b[i].year = year->valueint;
+        printf("%d년도 \n",b[i].year);
         
-        books[i].count_book = count_book->valueint;
-        printf("%d권수 \n",books[i].count_book);
+        b[i].count_book = count_book->valueint;
+        printf("%d권수 \n",b[i].count_book);
 
-        strcpy(books[i].add_sign, add_sign->valuestring);
-        printf("%s추가기호 \n",books[i].add_sign);
-        strcpy(books[i].kdc, kdc->valuestring);
-        printf("%skdc \n",books[i].kdc);
-        strcpy(books[i].topic, topic->valuestring);
-        printf("%s토픽 \n",books[i].topic);
+        strcpy(b[i].add_sign, add_sign->valuestring);
+        printf("%s추가기호 \n",b[i].add_sign);
+        strcpy(b[i].kdc, kdc->valuestring);
+        printf("%skdc \n",b[i].kdc);
+        strcpy(b[i].topic, topic->valuestring);
+        printf("%s토픽 \n",b[i].topic);
         
+        b[i].frequency_rental= frequency_rental->valueint;
         
-        books[i].frequency_rental= frequency_rental->valueint;
-        printf("%d",frequency_rental->valueint);
 
+        // printf("%d. ",i+1);
+        // printf("name %s\n", b[i].name);
+        // printf("isbn %s\n", b[i].isbn);
+        // printf("제목: %s\n", name->valuestring);
+        // printf("저자: %s\n", writer->valuestring);
         
         
     }
-    
-    
-    
 }
-
-
 
 char *read_json_file(const char *filename){
     FILE * file = fopen(filename, "r");
