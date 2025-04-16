@@ -37,6 +37,11 @@ int main()
     // printf("허허");
     store_to_struct(b);
     
+    for(int i=0; i< BOOK_SIZE; i++)
+    {
+        printf("도서명 : %s\n",b[i].name);
+    }
+    
 }
 
 void store_to_struct(books *b)
@@ -77,36 +82,28 @@ void store_to_struct(books *b)
         cJSON *frequency_rental = cJSON_GetObjectItemCaseSensitive(book,"대출 빈도");
 
         b[i].no = no->valueint;
-        // printf("허허");
+        
         strcpy(b[i].name , name->valuestring);
-        printf("%s\n",name->valuestring);
+        
         strcpy(b[i].isbn, isbn->valuestring);
         
         strcpy(b[i].name, name->valuestring);
         strcpy(b[i].publisher, publisher->valuestring);
         strcpy(b[i].writer, writer->valuestring);
         b[i].year = year->valueint;
-        printf("%d년도 \n",b[i].year);
+        
         
         b[i].count_book = count_book->valueint;
-        printf("%d권수 \n",b[i].count_book);
+        
 
         strcpy(b[i].add_sign, add_sign->valuestring);
-        printf("%s추가기호 \n",b[i].add_sign);
+        
         strcpy(b[i].kdc, kdc->valuestring);
-        printf("%skdc \n",b[i].kdc);
+        
         strcpy(b[i].topic, topic->valuestring);
-        printf("%s토픽 \n",b[i].topic);
+        
         
         b[i].frequency_rental= frequency_rental->valueint;
-        
-
-        // printf("%d. ",i+1);
-        // printf("name %s\n", b[i].name);
-        // printf("isbn %s\n", b[i].isbn);
-        // printf("제목: %s\n", name->valuestring);
-        // printf("저자: %s\n", writer->valuestring);
-        
         
     }
 }
