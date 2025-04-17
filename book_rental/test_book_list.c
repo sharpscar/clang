@@ -46,7 +46,7 @@ int main()
 
 void store_to_struct(books *b)
 {
-    printf("허허");
+    
     char *json_string = read_json_file("books.json");
     if(!json_string){
         printf("jsonfile 읽다가 문제생김");
