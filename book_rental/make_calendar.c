@@ -12,11 +12,28 @@ typedef struct {
     char day_[50];
     int is_open;  // 1이면 영업 0이면 휴일
 }bussiness_month;
+
+
 char *read_json_file(const char *filename);
 void solution(int a, int b, char *c);
 char *  get_current_time();
 int is_open_now(bussiness_month *m4);
+
+/* 원하는 달을 구조체로 생성합니다. 
+1. 매개변수 bussiness_month 구조체
+2. 해당 달 (4)
+*/ 
+void set_calendar(bussiness_month *m, int mon);
+/*
+사전 조건 - set_calendar 함수를 호출하여 해당 달에 해당하는 구조체를 생성해야합니다.
+1. 매개변수 bussiness_month 구조체
+2. 해당 달 (4)
+*/
 void make_json_file_for_bussiness(bussiness_month *m, int mon);
+/**
+ * 같은 디렉토리에 있는 example_4.json파일을 읽어서
+ * 매개변수로 전달한 m배열에 저장합니다. 
+ */
 void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon);
 int main()
 {
@@ -31,12 +48,13 @@ int main()
     is_open_now()
     */
 
-    bussiness_month m4[32];
+    bussiness_month m4[31]; // 31 32 이렇게 다른 이유는 해당달이 며칠까지 있는지에 따라 다릅니다.
     bussiness_month m5[32];
 
     bussiness_month temp[32];
 
-    // set_calendar(m4,4); // m4를 달력 객체로 만들고    
+    set_calendar(m4,4);                  // m4를 달력 객체로 만들고    
+    make_json_file_for_bussiness(m4, 4); // 구조체를 참고하여 example_4.json 파일을 생성 
     // set_calendar(m5,5);
 
     // make_json_file_for_bussiness(m4, 4);
@@ -56,14 +74,21 @@ int main()
     /*       
             "month_04":{             
     */
-   parsing_json_to_struct_for_bussiness(m4, 4);
    
-    for(int i=0; i<32; i++)
-    {
-        printf("test%s\n", m4[i].date);
-        printf("test%s\n", m4[i].day_);
-        printf("test%d\n", m4[i].is_open);
-    }
+//    parsing_json_to_struct_for_bussiness(m4, 4);
+   
+//    // 배열의 크기가 해당 달의 날수와 같기때문에
+//     for(int i=0; i<32; i++)
+//     {
+//         if(m4[i].date!=NULL)
+//         {
+//             printf("test%s\n", m4[i].date);
+//             printf("test%s\n", m4[i].day_);
+//             printf("test%d\n", m4[i].is_open);
+
+//         }
+        
+//     }
     
     // is_open_now(m4);
     // printf("%s", current);   
