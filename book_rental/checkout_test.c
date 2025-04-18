@@ -19,6 +19,8 @@ typedef struct {
 }checkout_books;
 
 char *  get_current_time();
+/*json 파일이 생성이 되긴 하는데 형식이 틀어진다. 98라인 , 쉼표가 마지막엔 
+붙지 말아야한다.*/
 
 int main()
 {
@@ -73,32 +75,34 @@ int main()
     strcpy(cb[4].books_isbn[4], "9788954672214");    
     strcpy(cb[4].checkout_date, get_current_time());
     
+    FILE *fp = fopen("checkout.json", "a");
+
+    fprintf(fp, "[");
+
+
     // 임의로 5개의 정보를 넣었다. 
     for(int i=0; i<5; i++)
     {
-        printf("유저 아이디 :%s\n",cb[i].user_id);
+        fprintf(fp, "{\n");
+
+        fprintf(fp, "\"유저 아이디\" :\"%s\",\n",cb[i].user_id);
         // printf("도서isbn :%d\n",cb[i].books_isbn[1]);
-        printf("대출일 %s\n",cb[i].checkout_date );
-        
+        fprintf(fp, "\"대출일\" : \"%s\", \n",cb[i].checkout_date );
+        fprintf(fp, "\"대여정보\" : \n");       
+        fprintf(fp, "{\n"); 
         for(int j=0; j<10; j++)
         {
             // isbn은 13자리여야 하고 0보다 커야한다.
             if(strlen(cb[i].books_isbn[j]) >= 13)
-            {
-                printf("도서isbn :%s\n",cb[i].books_isbn[j]);
-                
+            {                               
+                fprintf(fp, "\"isbn\" :\"%s\",\n",cb[i].books_isbn[j]);               
+                printf("\"도서isbn\" :\"%s\",\n",cb[i].books_isbn[j]);
             }
-            // printf("test %s\n", cb[i].books_isbn[j]);
-            
         }
-        
+        fprintf(fp, "},\n");
     }
-
-
-
-    
-
-
+    fprintf(fp, "]\n"); //전체닫기
+    fclose(fp);
     return 0;
 
 }
