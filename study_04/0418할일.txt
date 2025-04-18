@@ -1,0 +1,110 @@
+'user_id ':'12345',
+도서id 1, 도서id 1, 도서id 1, 도서id 1, 
+'user_id ':'12346',
+도서id 1, 도서id 1, 도서id 1, 도서id 1, 
+'user_id ':'12347',
+도서id 1, 도서id 1, 도서id 1, 도서id 1, 
+'user_id ':'12348',
+도서id 1, 도서id 1, 도서id 1, 도서id 1, 
+
+
+
+
+user_id 
+
+
+대출json에서 내 id로 필터링해라 
+
+대출json을 만들어서 
+
+대출 구조체
+struct checkout_books{
+    checkout_id int;
+    user_id char[50];
+    rend_book_isbns int[10]; // 빌린도서의 isbn 인트형 배열
+    checkout_date char[50];
+    return_date char[50];
+}
+
+영업일 구조체
+typedef struct {
+
+    char date[100];
+    char day_[50];
+    int is_open;  // 1이면 영업 0이면 휴일
+}bussiness_month;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef struct {
+    int no;                     // No
+    char title[SIZE];            // 제목
+    char author[SIZE];            // 저자
+    char publisher[SIZE];              // 출판사
+    int pub_year;              //출판년
+    int num_books;            //권
+    char isbn[SIZE];                 //ISBN
+    char extra_n[SIZE];              //부가기호
+    char kdc[SIZE];                //KDC
+    char kdc_subject[SIZE];        //KDC 주제명
+    int loan_frequency;      //대출 빈도
+} Book;
+
+
+
+CREATE TABLE books 
+(
+    ISBN INT PRIMARY KEY,
+    NO INT,
+    TITLE VARCHAR(50), 
+    AUTHOR VARCHAR(50),
+    PUBLISHER VARCHAR(50),
+    PUB_YEAR  VARCHAR(20),
+    NUM_BOOKS SMALLINT,
+    EXTRA_N VARCHAR(20),
+    KDC INT,
+    KDC_SUBJECT VARCHAR(30),
+    CHECKOUT_FREQ INT
+);
+
+LOAD DATA LOCAL INFILE '/home/scar/book_list.csv'
+INTO TABLE books CHARACTER SET 'UTF8'
+COLUMNS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES;
+//
+CREATE TABLE TMP_2(
+    ID INT AUTO_INCREMENT,
+    NAME VARCHAR(15),
+    CONSTRAINT PRIMARY KEY (ID));
+
+INSERT INTO TMP_2 VALUES(DEFAULT, 'LEE'), (DEFAULT, 'PARK'),(DEFAULT,'KIM');
+//
+
+CREATE TABLE USER 
+(
+    USER_ID VARCHAR(100) PRIMARY KEY,
+    USER_PW VARCHAR(100),
+    USER_NAME VARCHAR(100),
+    USER_AGE INT,
+    USER_ADDR VARCHAR(100),
+    USER_PHONE VARCHAR(50)
+);
+INSERT INTO USER VALUES('doolly','dooly1234','둘리',20000,'광주광역시 어딘가','010-2222-2222')
+
+INSERT INTO USER VALUES('tochi','tochi1234','또치',10,'광주광역시 어딘가2','010-3333-3333')
+INSERT INTO USER VALUES('douner','douner1234','도우너',12,'광주광역시 어딘가3','010-4444-4444');
+INSERT INTO USER VALUES('gogildong','dgogildong1234','고길동',43,'광주광역시 어딘가4','010-5555-5555');

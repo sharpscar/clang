@@ -1,0 +1,238 @@
+프로시져
+
+CREATE TABLE PERSON 
+(
+    ID INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    NAME VARCHAR(15),
+    AGE SMALLINT UNSIGNED,
+    GENDER BOOLEAN
+);
+
+PERSON테이블의 수를 세는놈?
+CREATE TABLE PERSON_COUNT(COUNT INT UNSIGNED);
+남자 사람수 세냐?
+CREATE TABLE MAN_COUNT(COUNT INT UNSIGNED);
+여자 사람수 세냐?
+CREATE TABLE WOMAN_COUNT(COUNT INT UNSIGNED); 
+
+DELIMITER //
+CREATE PROCEDURE
+BEGIN
+
+END
+// 
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE IN_PROCEDURE(
+    PARAM1 VARCHAR(15),
+    PARAM2 SMALLINT UNSIGNED,
+    PARAM3 BOOLEAN
+)
+
+BEGIN
+    INSERT INTO PERSON VALUES (DEFAULT,PARAM1,PARAM2,PARAM3);
+END;
+//
+DELIMITER ;
+
+CALL IN_PROCEDURE('JAMES', 15,1);
+SELECT * FROM PERSON;
+
+프로시저 삭제!
+DROP PROCEDURE IN_PROCEDURE
+
+함수는 무조건 INPUT BY OUTPUT
+
+프로시저의 경우에는 반환값을 가질수 있는데 이를 위해서는 반환하는 
+값을 정의해줘야 한다.
+
+DELIMITER //
+CREATE PROCEDURE COUNT_PERSON(OUT PARAM1 INT)
+BEGIN
+SELECT COUNT(*) INTO PARAM1 FROM PERSON;
+END;
+//
+DELIMITER ;
+
+CALL COUNT_PERSON(@A);
+SELECT @A;
+
+
+물론 동시에 값을 넣으면서 값을 받을수도 있다.
+
+DELIMITER //
+CREATE PROCEDURE COUNT_PERSON_COMPLEX(IN PARAM1 INT, IN PARAM2 INT, OUT PARAM3 INT)
+BEGIN
+SELECT COUNT(*) +  PARAM1 - PARAM2 INTO PARAM3 FROM PERSON;
+END;
+//
+DELIMITER ;
+
+CALL COUNT_PERSON_COMPLEX(5,2,@COUNTER);
+
+SELECT @COUNTER;
+
+다만 기본값을 주어줄 수 없으며 대신 NULL 값으로 자리를 채운다면 조건식으로
+DEFAULT와 같이 사용할 수 있으나 원하는 DEFAULT와 같은 형식은 이용하기 어렵다.
+
+
+아래의 IF문은 파라미터 3이 1보다 크면 1로 설정
+만약 0보다 작으면 0으로 설정하는 내용이다. 
+당연히 성별은 1과 0으로 나뉘는데 3이란 값이 들어오면
+기본값으로 1로 설정.
+
+DELIMITER //
+CREATE PROCEDURE IN_PROCEDURE_2(
+    PARAM1 VARCHAR(15),
+    PARAM2 SMALLINT UNSIGNED,
+    PARAM3 BOOLEAN
+)
+BEGIN
+    IF PARAM3 > 1  THEN
+        SET PARAM3 =1;
+    ELSEIF PARAM3 < 0 THEN
+        SET PARAM3 = 0;
+    END IF;
+
+    INSERT INTO PERSON VALUES(DEFAULT, PARAM1, PARAM2, PARAM3);
+END;
+//
+
+DELIMITER ;
+
+
+트리거
+
+INSERT INTO PERSON_COUNT VALUES(
+    (SELECT COUNT(*) FROM PERSON)
+);
+
+PERSON 테이블에 값을 넣을때마다
+PERSON_COUNT의 테이블에 값을 변경시키겠다. 
+
+CREATE TRIGGER SET_PERSON_COUNT
+AFTER INSERT ON PERSON
+FOR EACH ROW 
+UPDATE PERSON_COUNT SET COUNT = 
+(SELECT COUNT(*) FROM PERSON);
+
+산사 스타크를 추가하면
+CALL IN_PROCEDURE_2('SANS STARK',15,0);
+
+PERSON_COUNT의 COUNT 필드의 값이 자동으로 1 증가됨
+
+DELETE FROM PERSON WHERE ID = 1;
+
+삭제를 했을때 자동으로 카운트가 갱신되는 트리거!
+CREATE TRIGGER SET_PERSON_COUNT_DEL
+AFTER DELETE ON PERSON
+FOR EACH ROW
+UPDATE PERSON_COUNT SET COUNT =
+(SELECT COUNT(*) FROM PERSON);
+억지로 갱신하려면
+UPDATE PERSON_COUNT SET COUNT =
+(SELECT COUNT(*) FROM PERSON);
+트리거는 자동인데 한줄
+프로시저는 자동이 안되지만 여러줄가능
+프로시저를 만들어놓고 트리거로 동작시키면 꿀잼
+INSERT INTO MAN_COUNT VALUES (
+    (SELECT COUNT(*) FROM PERSON WHERE GENDER =TRUE)
+);
+
+INSERT INTO WOMAN_COUNT VALUES (
+    (SELECT COUNT(*) FROM PERSON WHERE GENDER =FALSE)
+);
+
+DELIMITER //
+CREATE PROCEDURE MAN_WOMAN_COUNT()
+BEGIN
+    UPDATE MAN_COUNT SET COUNT =
+    (SELECT COUNT(*) FROM PERSON WHERE GENDER =TRUE);
+    UPDATE WOMAN_COUNT SET COUNT =
+    (SELECT COUNT(*) FROM PERSON WHERE GENDER =FALSE);
+END;
+//
+
+
+
+PERSON 테이블에 행이 들어가면 위에 작성한 프로시저가 호출된다. 
+
+CREATE TRIGGER SET_MAN_WOMAN_COUNT_IN
+AFTER INSERT ON PERSON FOR EACH ROW 
+CALL MAN_WOMAN_COUNT();
+
+PERSON 테이블에 행이 삭제되면 위에 작성한 프로시저가 호출된다. 
+CREATE TRIGGER SET_MAN_WOMAN_COUNT_DEL
+AFTER DELETE ON PERSON FOR EACH ROW 
+CALL MAN_WOMAN_COUNT();
+
+
+
+
+CRUD는 외워라 
+SELECT * FROM TABLE
+INSERT INTO TABLE VALUES(...)
+UPDATE TABLE  SET COLUMN ...
+
+
+요구사항 분석 ! 
+
+개념적 설계 
+
+고객 (이름, USER_ID, 패스워드, 전화번호, 주소 , 나이)
+도서(ISBN, 도서명, 저자, 출판사, 출판년)
+대여(대여 아이디, 도서ISBN, USER_ID, 대여일, 반납일)
+
+
+
+CREATE TABLE PERSON 
+(
+    ID INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    NAME VARCHAR(15),
+    AGE SMALLINT UNSIGNED,
+    GENDER BOOLEAN
+);
+
+학생테이블
+
+교수테이블
+
+강의테이블
+
+
+구조적인 설계를 해보기 위해서 예제를 만들어봄
+학생이 수강신청하는DB를 만듬
+요구사항은 다음과같다.
+학생 정보는 이름 성별 나이 전공 학년 기숙사 여부로 선정한다.
+교수 정보는 이름 성별 나이 전공 교수호실로 선정한다.
+수강정보는 수강명, 대상학생, 교수정보, 교실, 수업시간으로 한다.
+굳이 테이블 개수가 3개일 필요는 없다.
+필요한 속성은 추가해도 상관없다.
+요구사항에 있는 속성은 무조건 구현되어야 한다.
+
+
+
+학생은 여러 과정을 들을수 있다. 1:N관계
+학생이 수강신청과목을 2개를 신청 한다.
+
+교수는 여러 과정을 가르칠수 있다. 1:N 관계
+교수가 3개의 과목을 가르칠수 있다.
+교수는 여러명의 학생을 가르칠수 있다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

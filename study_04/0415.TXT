@@ -1,3 +1,6 @@
+cd /etc/mysql/mariadb.conf.d/
+
+
 SQL 접속시 명령어
 
 
