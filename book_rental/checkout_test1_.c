@@ -67,22 +67,75 @@ int main()
     cnt = load_books("DATA.json");
     Book checkout_a_book;
     //내가 찾는책 
-    char isbn_[10] ="9791165341909";   // 대출이 발생하면 아래와 같은 형식으로 json파일을 생성하고 싶다.
+    char isbn_[15] ="9791189128562"; // 이건 나중에 매개변수로 받는다! 
     for(int i=0; i<cnt; i++)
     {
-        // printf("%s\n", books[i].title);
         if((strcmp(books[i].isbn, isbn_))==0)
         {
             checkout_a_book = books[i];
-            books[i].title
         }
-        // else{
-        //     printf("대여하려는 책이 도서관에 없어요\n");
-        // }
+        
     }
     printf("%s\n", checkout_a_book.title);
-   
+    //담았다.
 
+    //- 유저정보 / 대출일/ 대여정보 를 구조체에 담는다.
+    checkout_books cb_myinfo;
+    cb_myinfo.checkout_id =1;
+    strcpy(cb_myinfo.user_id, "scar");
+    strcpy(cb_myinfo.checkout_date,get_current_time());
+    cb_myinfo.books[0] = checkout_a_book;
+
+    //대여 json에 담는다 1. checkout_for_server.json 2.checkout_for_record.json
+    cJSON *root = cJSON_CreateArray();
+    cJSON *c = cJSON_CreateObject();
+    cJSON *b = cJSON_CreateObject();
+    cJSON *bs = cJSON_CreateArray();
+
+    
+    cJSON_AddStringToObject(c,"유저아이디", cb_myinfo.user_id);
+    cJSON_AddStringToObject(c,"대출일", cb_myinfo.checkout_date);
+    
+    cJSON_AddNumberToObject(b, "No", cb_myinfo.books[0].no);
+    cJSON_AddStringToObject(b, "제목", cb_myinfo.books[0].title);            // 저자 추가
+    cJSON_AddStringToObject(b, "저자", cb_myinfo.books[0].author);
+    cJSON_AddStringToObject(b, "출판사", cb_myinfo.books[0].publisher);
+    cJSON_AddNumberToObject(b, "출판년", cb_myinfo.books[0].pub_year);
+    cJSON_AddNumberToObject(b, "권", cb_myinfo.books[0].num_books);
+    cJSON_AddStringToObject(b, "ISBN", cb_myinfo.books[0].isbn);
+    cJSON_AddStringToObject(b, "부가기호", cb_myinfo.books[0].extra_n);
+    cJSON_AddStringToObject(b, "KDC", cb_myinfo.books[0].kdc);
+    cJSON_AddStringToObject(b, "KDC 주제명", cb_myinfo.books[0].kdc_subject);
+    cJSON_AddNumberToObject(b, "대출 빈도", cb_myinfo.books[0].loan_frequency);
+    
+    cJSON_AddItemToArray(root, c);
+    cJSON_AddItemToArray(root, b);
+    
+
+    char *out = cJSON_Print(root);
+    
+
+    char filename_1[30] ="checkout_for_server.json";
+    char filename_2[30] ="checkout_for_record.json"; 
+
+    FILE *fp1 = fopen(filename_1, "w");
+    fputs(out, fp1);
+    fclose(fp1);
+    
+
+    FILE *fp2 = fopen(filename_2, "w");
+    fputs(out, fp2);
+    fclose(fp2);
+
+   
+    free(out);
+    cJSON_Delete(root);
+
+    //삭제하는 함수 호출 
+
+    //save_books("DATA.json");             // 적용
+    
+    
 
 
     // {
