@@ -12,7 +12,7 @@
 #include <sys/types.h>
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
-#define PORT 11000            // 서버가 열릴 포트 번호
+#define PORT 10004           // 서버가 열릴 포트 번호
 #define SIZE 100
 // 도서 구조체 정의
 typedef struct {
@@ -364,9 +364,9 @@ void *client_handler(void *arg) {
                     char *uid = cJSON_GetObjectItem(user, "id")->valuestring;
                     if(strcmp(uid,id_ )==0)
                     {
-                        printf("해당하는 아이디가 있다.");
+                        
                         char *name = cJSON_GetObjectItem(user, "name")->valuestring;
-                        int *age = cJSON_GetObjectItem(user, "age")->valueint;
+                        int age = cJSON_GetObjectItem(user, "age")->valueint;
                         char *phone = cJSON_GetObjectItem(user, "phone")->valuestring;
                         char *addr = cJSON_GetObjectItem(user, "addr")->valuestring;
                         User user_info;
@@ -415,6 +415,65 @@ void *client_handler(void *arg) {
                     write(client_socket, &p_found[i], sizeof(Book));
                 }
                 free(p_found);
+            }
+
+            //전체 유저리스트를 한줄씩 출력 
+            if (strcmp(action, "9") == 0)
+            {
+                printf("잘오셧습니다. admin!");
+
+                read(client_socket, id, sizeof(id));
+                char id_[40];
+                strcpy(id_,id);
+
+                // id가 admin일경우만
+                // 구현테스트는 경태아이디
+                if(strcmp(id_,"scar")==0)
+                {
+                    char id_[50];
+                    
+                    strcpy(id_, id);
+                    
+                    FILE *fp = fopen("users.json", "r");
+                    if (!fp) return 0;
+                    fseek(fp, 0, SEEK_END);
+                    long len = ftell(fp);
+                    
+                    write(client_socket, &len, sizeof(long));
+                    
+
+                    rewind(fp);
+
+                    char *data = malloc(len + 1);
+                    fread(data, 1, len, fp);
+                    data[len] = '\0';
+                    fclose(fp);
+
+                    cJSON *root = cJSON_Parse(data);
+                    cJSON *user; 
+                    User users[len];
+                    int cnt=0;
+                    cJSON_ArrayForEach(user, root) {
+
+                        strcpy(user_info.id,cJSON_GetObjectItem(user, "id")->valuestring);
+                        strcpy(user_info.name, cJSON_GetObjectItem(user, "name")->valuestring);
+                        
+                        int age = cJSON_GetObjectItem(user, "age")->valueint;
+                        strcpy(user_info.phone,cJSON_GetObjectItem(user, "phone")->valuestring);
+                        strcpy(user_info.addr,cJSON_GetObjectItem(user, "addr")->valuestring);
+                        User user_info;
+                        
+                        cnt++;
+                    }
+
+
+                        write(client_socket, user_info.id, sizeof(user_info.id));
+                        write(client_socket, user_info.name, sizeof(user_info.name));
+                        write(client_socket, &user_info.age, sizeof(user_info.age));
+                        write(client_socket, user_info.phone, sizeof(user_info.phone));
+                        write(client_socket, user_info.addr, sizeof(user_info.addr));
+                }
+
             }
             
 

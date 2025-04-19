@@ -7,7 +7,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 11000  // 서버 포트
+#define PORT 10004  // 서버 포트
 
 // 서버와 동일한 도서 구조체 정의
 
@@ -120,30 +120,30 @@ int main() {
             cmd[strcspn(cmd, "\n")] = 0;
             send(sock, cmd, sizeof(cmd), 0);
             if (strcmp(cmd,"1") == 0)
-                {
+            {
 
-                    User user_info;
-                   
+                User user_info;
+                
 
-                    send(sock, id, sizeof(id), 0);
-                    
-                    //서버로부터 응답을 받음
-                    read(sock, user_info.id, sizeof(user_info.id));
-                    read(sock, user_info.name, sizeof(user_info.name));
-                    read(sock, &user_info.age, sizeof(int));
-                    read(sock, user_info.phone, sizeof(user_info.phone));
-                    read(sock, user_info.addr, sizeof(user_info.addr));
-                    
+                send(sock, id, sizeof(id), 0);
+                
+                //서버로부터 응답을 받음
+                read(sock, user_info.id, sizeof(user_info.id));
+                read(sock, user_info.name, sizeof(user_info.name));
+                read(sock, &user_info.age, sizeof(int));
+                read(sock, user_info.phone, sizeof(user_info.phone));
+                read(sock, user_info.addr, sizeof(user_info.addr));
+                
 
-                    printf("id :%s\n",user_info.id);
-                    printf("유저명 :%s\n",user_info.name);
-                    printf("나이 :%d\n",user_info.age);
-                    printf("전화번호 :%s\n",user_info.phone);
-                    printf("주소 :%s\n",user_info.addr);
+                printf("id :%s\n",id);
+                printf("유저명 :%s\n",user_info.name);
+                printf("나이 :%d\n",user_info.age);
+                printf("전화번호 :%s\n",user_info.phone);
+                printf("주소 :%s\n",user_info.addr);
 
-                    //내 정보를 화면에 출력 
+                //내 정보를 화면에 출력 
 
-                }
+            }
             if (strcmp(cmd, "2") == 0)
             {
                 char key[50], val[100];
@@ -179,6 +179,44 @@ int main() {
                 printf("검색 결과가 없습니다.\n");
                 free(p_results);
             } 
+
+            if (strcmp(cmd, "9") == 0) // 전체 유저 리스트 출력
+            {
+                printf("잘오셧습니다. 히든메뉴1\n");
+                long len;
+
+                send(sock, id, sizeof(id), 0);
+
+                read(sock, &len, sizeof(long));
+
+                int len_int;
+                len_int = (int)len;
+                printf("%ld\n",len);
+                // printf("잘오셧습니다. 히든메뉴2\n");
+                User user_info;
+                for(int i=0; i< len_int ; i++)
+                {
+                    printf("반복문 안입니다.");
+                    read(sock, user_info.id, sizeof(user_info.id));
+                    read(sock, user_info.name, sizeof(user_info.name));
+                    read(sock, &user_info.age, sizeof(user_info.age));
+                    read(sock, user_info.phone, sizeof(user_info.phone));
+                    read(sock, user_info.addr, sizeof(user_info.addr));
+
+                    printf("user id: %s user name: %s user age: %d phone: %s addr %s", 
+                        user_info.id,user_info.name,user_info.age,user_info.phone,user_info.addr
+                    );
+
+
+                }
+
+                printf("잘오셧습니다. 히든메뉴2\n");
+
+
+
+            }
+
+
             else if (strcmp(cmd, "add") == 0) // 도서 추가기능
             {
                 Book b;
