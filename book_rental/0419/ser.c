@@ -12,7 +12,7 @@
 #include <sys/types.h>
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
-#define PORT 5555         // 서버가 열릴 포트 번호
+#define PORT 7777         // 서버가 열릴 포트 번호
 #define SIZE 100
 // 도서 구조체 정의
 typedef struct {
@@ -406,6 +406,7 @@ void *client_handler(void *arg) {
             
             // client 1을 보냈는데 왜 0으로 받냐 ㅠ
             read(client_socket, cmd, sizeof(cmd)); 
+            //read 2번해야 제대로 읽음
             read(client_socket, cmd, sizeof(cmd));  // 사용자 요청
              // 사용자 요청
             printf("로그 cmd값은? :%s",cmd);
@@ -415,31 +416,64 @@ void *client_handler(void *arg) {
 
 
 
-                FILE *fp = fopen("DATA.json", "r");      // 파일 열기
-                if (!fp) return 0;                    // 파일이 없으면 0 리턴
+                // FILE *fp = fopen("DATA.json", "r");      // 파일 열기
+                // if (!fp) return 0;                    // 파일이 없으면 0 리턴
 
-                fseek(fp, 0, SEEK_END);               // 파일 끝으로 이동
-                long len = ftell(fp);                // 파일 길이 측정
-                rewind(fp); 
-                char *data = malloc(len + 1);         // JSON 데이터 저장할 메모리 할당
-                fread(data, 1, len, fp);              // 파일 데이터 읽기
-                fclose(fp);                           // 파일 닫기
-                data[len] = '\0';                    // 문자열 종료 문자
+                // fseek(fp, 0, SEEK_END);               // 파일 끝으로 이동
+                // long len = ftell(fp);                // 파일 길이 측정
+                // rewind(fp); 
+                // char *data = malloc(len + 1);         // JSON 데이터 저장할 메모리 할당
+                // fread(data, 1, len, fp);              // 파일 데이터 읽기
+                // fclose(fp);                           // 파일 닫기
+                // data[len] = '\0';                    // 문자열 종료 문자
             
-                cJSON *root = cJSON_Parse(data);  
+                // cJSON *root = cJSON_Parse(data);  
 
-                char*json_str =  cJSON_PrintUnformatted(root);   
-                // 3.  클라이언트로 전송
+                // char*json_str =  cJSON_PrintUnformatted(root);   
+                
 
                 // printf("%s\n",json_str);
-                // printf("클라이언트에 데이터를쐈다는 겁니다.\n");
-                
-                write(client_socket, json_str, strlen(json_str));
-                
+                // printf(" %ld", strlen(json_str));// 2653147
 
-                free(json_str);
-                cJSON_Delete(root);
                 
+                // printf("클라이언트에 데이터를쐈다는 겁니다.\n");
+               
+
+                // write1
+                write(client_socket, &book_count, sizeof(int));
+
+
+            /**
+        cJSON_AddNumberToObject(b, "No", books[i].no);
+        cJSON_AddStringToObject(b, "제목", books[i].title);            // 저자 추가
+        cJSON_AddStringToObject(b, "저자", books[i].author);
+        cJSON_AddStringToObject(b, "출판사", books[i].publisher);
+        cJSON_AddNumberToObject(b, "출판년", books[i].pub_year);
+        cJSON_AddNumberToObject(b, "권", books[i].num_books);
+        cJSON_AddStringToObject(b, "ISBN", books[i].isbn);
+        cJSON_AddStringToObject(b, "부가기호", books[i].extra_n);
+        cJSON_AddStringToObject(b, "KDC", books[i].kdc);
+        cJSON_AddStringToObject(b, "KDC 주제명", books[i].kdc_subject);
+        cJSON_AddNumberToObject(b, "대출 빈도", books[i].loan_frequency);
+             */
+                //write 2~11
+                for(int i=0; i<book_count; i++)
+                {
+                    write(client_socket, &books[i].no, sizeof(books[i].no));
+                    write(client_socket, books[i].title, sizeof(books[i].title));
+                    write(client_socket, books[i].author, sizeof(books[i].author));
+                    write(client_socket, books[i].publisher, sizeof(books[i].publisher));
+                    write(client_socket, &books[i].pub_year, sizeof(books[i].pub_year));
+                    write(client_socket, &books[i].num_books, sizeof(books[i].num_books));
+                    write(client_socket, books[i].isbn, sizeof(books[i].isbn));
+                    write(client_socket, books[i].extra_n, sizeof(books[i].extra_n));
+                    write(client_socket, books[i].kdc, sizeof(books[i].kdc));
+                    write(client_socket, books[i].kdc_subject, sizeof(books[i].kdc_subject));
+                    write(client_socket, &books[i].loan_frequency, sizeof(books[i].loan_frequency));
+
+
+
+                }
                
             } 
             break;

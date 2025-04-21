@@ -11,7 +11,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 5555  // 서버 포트
+#define PORT 7777  // 서버 포트
 
 // 서버와 동일한 도서 구조체 정의
 
@@ -276,32 +276,113 @@ int main() {
             
                 printf("도서관리로 들어옴\n");
                 int answer;
-                int action;
                 scanf("%d",&answer);
                 // fgets(cmd, sizeof(cmd), stdin);
 
                 if(answer == 1)
                 {
                     strcpy(cmd, "get_books");
-                    printf("전체도서 목록요청 들어옴 action값은: %d\n",action);
                     
                     //send 1(int)
                     send(sock, cmd, sizeof(cmd), 0);
+                    printf("=======================================\n");
                     
-                    
-                    char buffer[2048];
-                   
+                    // char *json_str= malloc(sizeof(buffer)*2047);
+
                     //read 1 (char)
-                    int len = read(sock, buffer, 2047);
-                    len = read(sock, buffer, 2047);
+                    // len = read(sock, buffer, 2047);
+                    int temp;
+                    //크기를 가져온다.
+                    // read1
+                    read(sock, &temp, sizeof(int));
 
-                    printf("testets len의 갑은 : %d\n", len);
-                    if(len <=0 ) return NULL;
-                    buffer[len] = '\0';
+                    const int books_count = temp;
+                    Book books[books_count];
+                    
+                    
+                    /** size =100;
+                     *  int no;                     // No
+                        char title[SIZE];            // 제목
+                        char author[SIZE];            // 저자
+                        char publisher[SIZE];              // 출판사
+                        int pub_year;              //출판년
+                        int num_books;            //권
+                        char isbn[SIZE];                 //ISBN
+                        char extra_n[SIZE];              //부가기호
+                        char kdc[SIZE];                //KDC
+                        char kdc_subject[SIZE];        //KDC 주제명
+                        int loan_frequency;      //대출 빈도
+                     */
 
-                    cJSON *json= cJSON_Parse(buffer);
+                    // read 2~11
+                    for (int i=0; i<books_count; i++){
 
-                    char *string = cJSON_Print(json);
+                        int book_no;
+                        read(sock, &book_no, sizeof(int));
+                        books[i].no = book_no;
+                        
+                        char book_title[SIZE];
+                        read(sock, book_title, sizeof(book_title));
+                        strcpy(books[i].title , book_title);
+                        
+                        char author[SIZE];
+                        read(sock, author, sizeof(author));
+                        strcpy(books[i].author , author);
+                        
+                        char publisher[SIZE];
+                        read(sock, publisher, sizeof(publisher));
+                        strcpy(books[i].publisher, publisher);
+                        
+                        int pub_year;
+                        read(sock, &pub_year, sizeof(int));
+                        books[i].pub_year =pub_year;
+                        
+                        int num_books;
+                        read(sock, &num_books, sizeof(int));
+                        books[i].num_books = num_books;
+                        
+                        char isbn[SIZE];
+                        read(sock, isbn, sizeof(isbn));
+                        strcpy(books[i].isbn, isbn);
+                        
+                        char extra_n[SIZE];
+                        read(sock, extra_n, sizeof(extra_n));
+                        strcpy(books[i].extra_n, extra_n);
+                        
+                        char kdc[SIZE];
+                        read(sock,kdc, sizeof(kdc));
+                        strcpy(books[i].kdc, kdc);
+                        
+                        char kdc_subject[SIZE];
+                        read(sock, kdc_subject, sizeof(kdc_subject));
+                        strcpy(books[i].kdc_subject,kdc_subject);
+                        
+                        int loan_frequency;
+                        read(sock, &loan_frequency, sizeof(int));
+                        books[i].loan_frequency=loan_frequency;
+
+                        printf("책번호 : %d 책제목: %s 저자: %s 출판사: %s 출판년도: %d권수: %d ISBN: %s 부가기호: %s KDC: %s KDC주제명: %s 대출빈도 %d \n", books[i].no ,books[i].title, 
+                        books[i].author,books[i].publisher, books[i].pub_year, books[i].num_books,
+                        books[i].isbn, books[i].extra_n, books[i].kdc, books[i].kdc_subject, books[i].loan_frequency
+
+                        );
+                    }
+
+
+                  
+
+                    // if(str_len <=0 ) return NULL;
+                    // buffer[str_len] = '\0';
+                
+                    // cJSON_Parse(buffer);
+                    
+
+                    // printf("%s", json_str);
+                    
+                    
+                    printf("=======================================\n");
+                    
+
 
                     
 
