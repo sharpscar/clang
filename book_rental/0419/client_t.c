@@ -298,7 +298,7 @@ int main() {
 
                     const int books_count = temp;
                     Book books[books_count];
-                    
+                    // memset(&books,0,sizeof(struct Book)*books_count);
                     
                     /** size =100;
                      *  int no;                     // No
