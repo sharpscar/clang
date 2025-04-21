@@ -12,7 +12,7 @@
 #include <sys/types.h>
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
-#define PORT 10004           // 서버가 열릴 포트 번호
+#define PORT 5555         // 서버가 열릴 포트 번호
 #define SIZE 100
 // 도서 구조체 정의
 typedef struct {
@@ -337,68 +337,6 @@ void *client_handler(void *arg) {
             char action[16];
             read(client_socket, action, sizeof(action));  // 사용자 요청
             action[strcspn(action, "\n")] = '\0';
-            
-            if (strcmp(action, "1") == 0)
-            {
-                char id_[50];
-                read(client_socket, id, sizeof(id));
-                strcpy(id_, id);
-                
-                FILE *fp = fopen("users.json", "r");
-                if (!fp) return 0;
-                fseek(fp, 0, SEEK_END);
-                long len = ftell(fp);
-                rewind(fp);
-
-                char *data = malloc(len + 1);
-                fread(data, 1, len, fp);
-                data[len] = '\0';
-                fclose(fp);
-
-                cJSON *root = cJSON_Parse(data);
-                cJSON *user;                 
-                
-                printf("%s\n", id_);
-
-                cJSON_ArrayForEach(user, root) {
-                    char *uid = cJSON_GetObjectItem(user, "id")->valuestring;
-                    if(strcmp(uid,id_ )==0)
-                    {
-                        
-                        char *name = cJSON_GetObjectItem(user, "name")->valuestring;
-                        int age = cJSON_GetObjectItem(user, "age")->valueint;
-                        char *phone = cJSON_GetObjectItem(user, "phone")->valuestring;
-                        char *addr = cJSON_GetObjectItem(user, "addr")->valuestring;
-                        User user_info;
-                        
-
-                        strcpy(user_info.name, name);
-                        user_info.age = age;
-                        strcpy(user_info.phone, phone);
-                        strcpy(user_info.addr , addr);
-                        
-
-                        write(client_socket, user_info.id, sizeof(user_info.id));
-                        write(client_socket, user_info.name, sizeof(user_info.name));
-                        write(client_socket, &user_info.age, sizeof(user_info.age));
-                        write(client_socket, user_info.phone, sizeof(user_info.phone));
-                        write(client_socket, user_info.addr, sizeof(user_info.addr));
-
-                        // printf("%s\n",user_info.name);
-                        // printf("%d\n",user_info.age);
-                        // printf("%s\n",user_info.phone);
-                        // printf("%s\n",user_info.addr);
-
-                    }
-                    else{
-                        printf("유저가 없거나 가져올수 없습니다.\n");
-                    }
-                }
-
-            }
-            
-            
-            
             if (strcmp(action, "2") == 0)
             {
                 char key[50], val[100];
@@ -416,67 +354,6 @@ void *client_handler(void *arg) {
                 }
                 free(p_found);
             }
-
-            //전체 유저리스트를 한줄씩 출력 
-            if (strcmp(action, "9") == 0)
-            {
-                printf("잘오셧습니다. admin!");
-
-                read(client_socket, id, sizeof(id));
-                char id_[40];
-                strcpy(id_,id);
-
-                // id가 admin일경우만
-                // 구현테스트는 경태아이디
-                if(strcmp(id_,"scar")==0)
-                {
-                    char id_[50];
-                    
-                    strcpy(id_, id);
-                    
-                    FILE *fp = fopen("users.json", "r");
-                    if (!fp) return 0;
-                    fseek(fp, 0, SEEK_END);
-                    long len = ftell(fp);
-                    
-                    write(client_socket, &len, sizeof(long));
-                    
-
-                    rewind(fp);
-
-                    char *data = malloc(len + 1);
-                    fread(data, 1, len, fp);
-                    data[len] = '\0';
-                    fclose(fp);
-
-                    cJSON *root = cJSON_Parse(data);
-                    cJSON *user; 
-                    User users[len];
-                    int cnt=0;
-                    cJSON_ArrayForEach(user, root) {
-
-                        strcpy(user_info.id,cJSON_GetObjectItem(user, "id")->valuestring);
-                        strcpy(user_info.name, cJSON_GetObjectItem(user, "name")->valuestring);
-                        
-                        int age = cJSON_GetObjectItem(user, "age")->valueint;
-                        strcpy(user_info.phone,cJSON_GetObjectItem(user, "phone")->valuestring);
-                        strcpy(user_info.addr,cJSON_GetObjectItem(user, "addr")->valuestring);
-                        User user_info;
-                        
-                        cnt++;
-                    }
-
-
-                        write(client_socket, user_info.id, sizeof(user_info.id));
-                        write(client_socket, user_info.name, sizeof(user_info.name));
-                        write(client_socket, &user_info.age, sizeof(user_info.age));
-                        write(client_socket, user_info.phone, sizeof(user_info.phone));
-                        write(client_socket, user_info.addr, sizeof(user_info.addr));
-                }
-
-            }
-            
-
 
             if (strcmp(action, "add") == 0)
             {
@@ -517,14 +394,59 @@ void *client_handler(void *arg) {
         }
     }
     else if (result == 3 && strcmp(cmd, "login") == 0) { //사러로 로그인했을때 기능
+
+       
         while (1) {
-            char action[16];
-            read(client_socket, action, sizeof(action));  // 사용자 요청
-            action[strcspn(action, "\n")] = '\0';
-            if (strcmp(action, "5") == 0)
+           
+            int action;
+            // printf("와일문 1\n");
+            // printf("action값은? %d\n",action);
+            // printf("result :%d cmd : %s\n", result, cmd);
+
+            
+            // client 1을 보냈는데 왜 0으로 받냐 ㅠ
+            read(client_socket, cmd, sizeof(cmd)); 
+            read(client_socket, cmd, sizeof(cmd));  // 사용자 요청
+             // 사용자 요청
+            printf("로그 cmd값은? :%s",cmd);
+
+            if (strcmp(cmd,"get_books")==0)
             {
-                break;
-            }   
+
+
+
+                FILE *fp = fopen("DATA.json", "r");      // 파일 열기
+                if (!fp) return 0;                    // 파일이 없으면 0 리턴
+
+                fseek(fp, 0, SEEK_END);               // 파일 끝으로 이동
+                long len = ftell(fp);                // 파일 길이 측정
+                rewind(fp); 
+                char *data = malloc(len + 1);         // JSON 데이터 저장할 메모리 할당
+                fread(data, 1, len, fp);              // 파일 데이터 읽기
+                fclose(fp);                           // 파일 닫기
+                data[len] = '\0';                    // 문자열 종료 문자
+            
+                cJSON *root = cJSON_Parse(data);  
+
+                char*json_str =  cJSON_PrintUnformatted(root);   
+                // 3.  클라이언트로 전송
+
+                // printf("%s\n",json_str);
+                // printf("클라이언트에 데이터를쐈다는 겁니다.\n");
+                
+                write(client_socket, json_str, strlen(json_str));
+                
+
+                free(json_str);
+                cJSON_Delete(root);
+                
+               
+            } 
+            break;
+            
+
+            
+
         }
     }
 

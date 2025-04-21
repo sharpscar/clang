@@ -4,10 +4,14 @@
 #include <unistd.h>             // read(), write(), close() 등
 #include <netinet/in.h>         // sockaddr_in 구조체 정의
 #include <arpa/inet.h>          // inet_pton() 함수
+#include "cJSON.h"   // JSON 처리 라이브러리 헤더
+#include "cJSON.c"
+
+
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 10004  // 서버 포트
+#define PORT 5555  // 서버 포트
 
 // 서버와 동일한 도서 구조체 정의
 
@@ -122,24 +126,24 @@ int main() {
             if (strcmp(cmd,"1") == 0)
             {
 
-                User user_info;
+                // User user_info;
                 
 
                 send(sock, id, sizeof(id), 0);
                 
-                //서버로부터 응답을 받음
-                read(sock, user_info.id, sizeof(user_info.id));
-                read(sock, user_info.name, sizeof(user_info.name));
-                read(sock, &user_info.age, sizeof(int));
-                read(sock, user_info.phone, sizeof(user_info.phone));
-                read(sock, user_info.addr, sizeof(user_info.addr));
+                // //서버로부터 응답을 받음
+                // read(sock, user_info.id, sizeof(user_info.id));
+                // read(sock, user_info.name, sizeof(user_info.name));
+                // read(sock, &user_info.age, sizeof(int));
+                // read(sock, user_info.phone, sizeof(user_info.phone));
+                // read(sock, user_info.addr, sizeof(user_info.addr));
                 
 
-                printf("id :%s\n",id);
-                printf("유저명 :%s\n",user_info.name);
-                printf("나이 :%d\n",user_info.age);
-                printf("전화번호 :%s\n",user_info.phone);
-                printf("주소 :%s\n",user_info.addr);
+                // printf("id :%s\n",id);
+                // printf("유저명 :%s\n",user_info.name);
+                // printf("나이 :%d\n",user_info.age);
+                // printf("전화번호 :%s\n",user_info.phone);
+                // printf("주소 :%s\n",user_info.addr);
 
                 //내 정보를 화면에 출력 
 
@@ -179,43 +183,6 @@ int main() {
                 printf("검색 결과가 없습니다.\n");
                 free(p_results);
             } 
-
-            if (strcmp(cmd, "9") == 0) // 전체 유저 리스트 출력
-            {
-                printf("잘오셧습니다. 히든메뉴1\n");
-                long len;
-
-                send(sock, id, sizeof(id), 0);
-
-                read(sock, &len, sizeof(long));
-
-                int len_int;
-                len_int = (int)len;
-                printf("%ld\n",len);
-                // printf("잘오셧습니다. 히든메뉴2\n");
-                User user_info;
-                for(int i=0; i< len_int ; i++)
-                {
-                    printf("반복문 안입니다.");
-                    read(sock, user_info.id, sizeof(user_info.id));
-                    read(sock, user_info.name, sizeof(user_info.name));
-                    read(sock, &user_info.age, sizeof(user_info.age));
-                    read(sock, user_info.phone, sizeof(user_info.phone));
-                    read(sock, user_info.addr, sizeof(user_info.addr));
-
-                    printf("user id: %s user name: %s user age: %d phone: %s addr %s", 
-                        user_info.id,user_info.name,user_info.age,user_info.phone,user_info.addr
-                    );
-
-
-                }
-
-                printf("잘오셧습니다. 히든메뉴2\n");
-
-
-
-            }
-
 
             else if (strcmp(cmd, "add") == 0) // 도서 추가기능
             {
@@ -287,6 +254,8 @@ int main() {
                 plag_exit = 1;
                 break;
             }
+
+            
         }
     }
     else if (result == 3){
@@ -301,6 +270,45 @@ int main() {
             plag_exit = 1;
             break;
         }
+
+        if (strcmp(cmd, "1") == 0)
+            {
+            
+                printf("도서관리로 들어옴\n");
+                int answer;
+                int action;
+                scanf("%d",&answer);
+                // fgets(cmd, sizeof(cmd), stdin);
+
+                if(answer == 1)
+                {
+                    strcpy(cmd, "get_books");
+                    printf("전체도서 목록요청 들어옴 action값은: %d\n",action);
+                    
+                    //send 1(int)
+                    send(sock, cmd, sizeof(cmd), 0);
+                    
+                    
+                    char buffer[2048];
+                   
+                    //read 1 (char)
+                    int len = read(sock, buffer, 2047);
+                    len = read(sock, buffer, 2047);
+
+                    printf("testets len의 갑은 : %d\n", len);
+                    if(len <=0 ) return NULL;
+                    buffer[len] = '\0';
+
+                    cJSON *json= cJSON_Parse(buffer);
+
+                    char *string = cJSON_Print(json);
+
+                    
+
+                }
+
+
+            }
     }
     close(sock);
 }
