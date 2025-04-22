@@ -18,7 +18,8 @@
         "initializer_list": "c",
         "utility": "c",
         "algorithm": "c",
-        "stat.h": "c"
+        "stat.h": "c",
+        "random": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

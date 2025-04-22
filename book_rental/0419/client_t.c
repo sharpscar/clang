@@ -11,7 +11,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 7777  // 서버 포트
+#define PORT 1111  // 서버 포트
 
 // 서버와 동일한 도서 구조체 정의
 
@@ -273,7 +273,8 @@ int main() {
 
         if (strcmp(cmd, "1") == 0)
             {
-            
+                #pragma pack(push, 1)
+                cmd[strcspn(cmd, "\n")] = 0;
                 printf("도서관리로 들어옴\n");
                 int answer;
                 scanf("%d",&answer);
@@ -281,6 +282,7 @@ int main() {
 
                 if(answer == 1)
                 {
+                    cmd[strcspn(cmd, "\n")] = 0;
                     strcpy(cmd, "get_books");
                     
                     //send 1(int)
@@ -294,31 +296,21 @@ int main() {
                     int temp;
                     //크기를 가져온다.
                     // read1
+                    // while(getchar()!='\n');
+
                     read(sock, &temp, sizeof(int));
 
-                    const int books_count = temp;
+                    const int books_count =  temp;
                     Book books[books_count];
-                    // memset(&books,0,sizeof(struct Book)*books_count);
                     
-                    /** size =100;
-                     *  int no;                     // No
-                        char title[SIZE];            // 제목
-                        char author[SIZE];            // 저자
-                        char publisher[SIZE];              // 출판사
-                        int pub_year;              //출판년
-                        int num_books;            //권
-                        char isbn[SIZE];                 //ISBN
-                        char extra_n[SIZE];              //부가기호
-                        char kdc[SIZE];                //KDC
-                        char kdc_subject[SIZE];        //KDC 주제명
-                        int loan_frequency;      //대출 빈도
-                     */
-
+                    memset(books,0,sizeof(books));
+                    
+                   
                     // read 2~11
                     for (int i=0; i<books_count; i++){
 
                         int book_no;
-                        read(sock, &book_no, sizeof(int));
+                        read(sock, &book_no, sizeof(book_no));
                         books[i].no = book_no;
                         
                         char book_title[SIZE];
@@ -334,11 +326,11 @@ int main() {
                         strcpy(books[i].publisher, publisher);
                         
                         int pub_year;
-                        read(sock, &pub_year, sizeof(int));
+                        read(sock, &pub_year, sizeof(pub_year));
                         books[i].pub_year =pub_year;
                         
                         int num_books;
-                        read(sock, &num_books, sizeof(int));
+                        read(sock, &num_books, sizeof(num_books));
                         books[i].num_books = num_books;
                         
                         char isbn[SIZE];
@@ -358,16 +350,46 @@ int main() {
                         strcpy(books[i].kdc_subject,kdc_subject);
                         
                         int loan_frequency;
-                        read(sock, &loan_frequency, sizeof(int));
+                        read(sock, &loan_frequency, sizeof(loan_frequency));
                         books[i].loan_frequency=loan_frequency;
+                        
+                        if((books[i].no !=0)&&(books[i].no >0)&&(books[i].no <= 10000)&& (books[i].num_books>0)&&(books[i].pub_year>0)&&(books[i].title!=NULL))
+                        {
 
-                        printf("책번호 : %d 책제목: %s 저자: %s 출판사: %s 출판년도: %d권수: %d ISBN: %s 부가기호: %s KDC: %s KDC주제명: %s 대출빈도 %d \n", books[i].no ,books[i].title, 
-                        books[i].author,books[i].publisher, books[i].pub_year, books[i].num_books,
-                        books[i].isbn, books[i].extra_n, books[i].kdc, books[i].kdc_subject, books[i].loan_frequency
 
-                        );
+                            printf("책번호 : %d 책제목: %s 저자: %s 출판사: %s 출판년도: %d권수: %d ISBN: %s 부가기호: %s KDC: %s KDC주제명: %s 대출빈도 %d \n", 
+                                books[i].no ,books[i].title,books[i].author,books[i].publisher, books[i].pub_year, books[i].num_books,
+                                books[i].isbn, books[i].extra_n, books[i].kdc, books[i].kdc_subject, books[i].loan_frequency
+                                );
+                            // sleep(4);
+                           
+                        }else{
+                            printf("book_no : %d book_title: %s book_author: %s  book_publisher: %s pub_year:       %d num_books : %d  isbn: %s extra_n : %s kdc: %s kdc_sub : %s loan_frequency : %d\n",
+                                    books[i].no,
+                                    books[i].title,
+                                    books[i].author,
+                                    books[i].publisher,
+                                    books[i].pub_year,
+                                    books[i].num_books,
+                                    books[i].isbn,
+                                    books[i].extra_n,
+                                    books[i].kdc,
+                                    books[i].kdc_subject,
+                                    books[i].loan_frequency
+                                    );
+
+            
+                                    sleep(1);
+                        }
+                        
+                    printf("[system LOG 2] %s\n",  books[i].title);
+                        
+                        
+
                     }
-
+                    // read(sock,(struct books*)&books, sizeof(books,0));
+                    // sleep(1);
+                    printf("[system LOG 1] %d\n", books_count);
 
                   
 
@@ -385,7 +407,6 @@ int main() {
 
 
                     
-
                 }
 
 
