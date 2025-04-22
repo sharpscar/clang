@@ -10,10 +10,13 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
-#define PORT 1111         // 서버가 열릴 포트 번호
+#define MAX_USERS 500
+#define PORT 9000             // 서버가 열릴 포트 번호
 #define SIZE 100
+
 // 도서 구조체 정의
 typedef struct {
     int no;                     // No
@@ -36,11 +39,22 @@ typedef struct {
     int age;
     char phone[50];
     char addr[50];
-}User;
+    int msc;
+} User;
+
+typedef struct {
+
+    char date[100];
+    char day_[50];
+    int is_open;  // 1이면 영업 0이면 휴일
+}bussiness_month;
+
 
 // 전역 도서 배열과 관련 변수 선언
 Book books[MAX_BOOKS];          // 도서 목록을 저장할 배열
+User Users[MAX_USERS];
 int book_count = 0;             // 현재 등록된 도서 수
+int user_count = 0; // 현재 등록된 유저 수
 pthread_mutex_t book_mutex = PTHREAD_MUTEX_INITIALIZER;  // 도서 데이터 접근 동기화를 위한 뮤텍스
 
 // 도서 목록을 JSON 파일에서 불러오는 함수
@@ -77,12 +91,48 @@ int load_books(const char *filename) {
         
         count++;                                                                // 도서 수 증가
     }
-
+    
     cJSON_Delete(root);            // JSON 객체 해제
     free(data);                    // 메모리 해제
     book_count = count;            // 총 도서 수 저장
     return count;                  // 로드된 도서 수 반환
 }
+int load_user(const char *filename) {
+    FILE *fp = fopen(filename, "r");      // 파일 열기
+    if (!fp) return 0;                    // 파일이 없으면 0 리턴
+
+    fseek(fp, 0, SEEK_END);               // 파일 끝으로 이동
+    long len = ftell(fp);                // 파일 길이 측정
+    rewind(fp);                           // 다시 파일 처음으로 이동
+
+    char *data = malloc(len + 1);         // JSON 데이터 저장할 메모리 할당
+    fread(data, 1, len, fp);              // 파일 데이터 읽기
+    fclose(fp);                           // 파일 닫기
+    data[len] = '\0';                    // 문자열 종료 문자
+
+    cJSON *root = cJSON_Parse(data);      // JSON 파싱
+    if (!root) return 0;                  // 파싱 실패 시 0 반환
+
+    int count_2 = 0;
+    cJSON *User;
+    cJSON_ArrayForEach(User, root) {      // JSON 배열 순회
+        strcpy(Users[count_2].id, cJSON_GetObjectItem(User, "id")->valuestring);
+        strcpy(Users[count_2].pw, cJSON_GetObjectItem(User, "password")->valuestring);  
+        strcpy(Users[count_2].name, cJSON_GetObjectItem(User, "name")->valuestring);
+        Users[count_2].age = cJSON_GetObjectItem(User, "age")->valueint;
+        strcpy(Users[count_2].phone, cJSON_GetObjectItem(User, "phone")->valuestring);
+        strcpy(Users[count_2].addr, cJSON_GetObjectItem(User, "addr")->valuestring);
+        Users[count_2].msc = cJSON_GetObjectItem(User, "messagecount")->valueint;
+
+        count_2++;                                                                // 도서 수 증가
+    }
+    
+    cJSON_Delete(root);            // JSON 객체 해제
+    free(data);                    // 메모리 해제
+    user_count = count_2;            // 총 도서 수 저장
+    return count_2;                  // 로드된 도서 수 반환
+}
+
 
 // 도서 목록을 JSON 파일로 저장하는 함수
 int save_books(const char *filename) {
@@ -185,7 +235,7 @@ void create_user_folder(const char *id) {
     char path[256];
 
     // 기본 경로 + 사용자명으로 폴더 경로 구성
-    snprintf(path, sizeof(path), "/home/yang/C/base/user/%s", id);
+    snprintf(path, sizeof(path), "/home/yang/C/project11/%s", id);
 
     // 폴더 생성 (0755 권한)
     if (mkdir(path, 0755) == -1) {
@@ -201,7 +251,6 @@ void create_user_folder(const char *id) {
 }
 // 로그인 기능
 int login(const char *id, const char *pw) {
-
     FILE *fp = fopen("users.json", "r");
     if (!fp) return 0;
     fseek(fp, 0, SEEK_END);
@@ -278,9 +327,9 @@ int register_user(const char *id, const char *pw, const char *nickname, int year
     cJSON_AddStringToObject(new_user, "id", id);
     cJSON_AddStringToObject(new_user, "password", pw);
     cJSON_AddStringToObject(new_user, "name", nickname);
-    cJSON_AddNumberToObject(new_user, "year", year);
+    cJSON_AddNumberToObject(new_user, "age", year);
     cJSON_AddStringToObject(new_user, "phone", phone);
-    cJSON_AddStringToObject(new_user, "address", address);
+    cJSON_AddStringToObject(new_user, "addr", address);
     cJSON_AddNumberToObject(new_user, "messagecount", messege_a);
     cJSON_AddItemToArray(root, new_user);
 
@@ -332,12 +381,69 @@ void *client_handler(void *arg) {
     write(client_socket, &result, sizeof(int));
 
 
-    if (result == 1 && strcmp(cmd, "login") == 0) { // 일반 사용자 기능
+    if (result == 1 && strcmp(cmd, "login") == 0) {
         while (1) {
             char action[16];
             read(client_socket, action, sizeof(action));  // 사용자 요청
             action[strcspn(action, "\n")] = '\0';
-            if (strcmp(action, "2") == 0)
+            if (strcmp(action, "1") == 0)
+            {
+                char id_[50];
+                read(client_socket, id, sizeof(id));
+                strcpy(id_, id);
+                
+                FILE *fp = fopen("users.json", "r");
+                if (!fp) return 0;
+                fseek(fp, 0, SEEK_END);
+                long len = ftell(fp);
+                rewind(fp);
+
+                char *data = malloc(len + 1);
+                fread(data, 1, len, fp);
+                data[len] = '\0';
+                fclose(fp);
+
+                cJSON *root = cJSON_Parse(data);
+                cJSON *user;                 
+                
+                printf("%s\n", id_);
+
+                cJSON_ArrayForEach(user, root) {
+                    char *uid = cJSON_GetObjectItem(user, "id")->valuestring;
+                    if(strcmp(uid,id_ )==0)
+                    {
+                        
+                        char *name = cJSON_GetObjectItem(user, "name")->valuestring;
+                        int age = cJSON_GetObjectItem(user, "age")->valueint;
+                        char *phone = cJSON_GetObjectItem(user, "phone")->valuestring;
+                        char *addr = cJSON_GetObjectItem(user, "addr")->valuestring;
+                        User user_info;
+                        
+
+                        strcpy(user_info.name, name);
+                        user_info.age = age;
+                        strcpy(user_info.phone, phone);
+                        strcpy(user_info.addr , addr);
+                        
+
+                        write(client_socket, user_info.id, sizeof(user_info.id));
+                        write(client_socket, user_info.name, sizeof(user_info.name));
+                        write(client_socket, &user_info.age, sizeof(user_info.age));
+                        write(client_socket, user_info.phone, sizeof(user_info.phone));
+                        write(client_socket, user_info.addr, sizeof(user_info.addr));
+
+                        printf("%s\n",user_info.name);
+                        printf("%d\n",user_info.age);
+                        printf("%s\n",user_info.phone);
+                        printf("%s\n",user_info.addr);
+
+                    }
+                    else{
+                        printf("유저가 없거나 가져올수 없습니다.\n");
+                    }
+                 }
+            }
+            if (strcmp(action, "2") == 0) // 도서검색하기
             {
                 char key[50], val[100];
                 read(client_socket, key, sizeof(key));
@@ -354,32 +460,11 @@ void *client_handler(void *arg) {
                 }
                 free(p_found);
             }
-
-            if (strcmp(action, "add") == 0)
-            {
-                Book b;
-                read(client_socket, &b, sizeof(Book));
-                result = add_book(b);
-                write(client_socket, &result, sizeof(int));
-            } 
-            else if (strcmp(action, "delete") == 0)
-            {
-                char isbn[200];
-                read(client_socket, isbn, sizeof(char));
-                result = delete_book(isbn);
-                write(client_socket, &result, sizeof(int));
-            } 
-            else if (strcmp(action, "modify") == 0)
-            {
-                Book b;
-                read(client_socket, &b, sizeof(Book));
-                result = modify_book(b);
-                write(client_socket, &result, sizeof(int));
-            }
-            else if (strcmp(action, "exit") == 0)
+            
+            else if (strcmp(action, "5") == 0)
             {
                 break;
-            }                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+            }                                                                                                                                                                                                                                                                                                                                                                                                                                              
         }
     }
     else if (result == 2 && strcmp(cmd, "login") == 0) { //관리자로 로그인했을때 기능
@@ -387,80 +472,97 @@ void *client_handler(void *arg) {
             char action[16];
             read(client_socket, action, sizeof(action));  // 사용자 요청
             action[strcspn(action, "\n")] = '\0';
-            if (strcmp(action, "5") == 0)
+            if (strcmp(action, "1") == 0)
+            {
+                char somi[16];
+                read(client_socket, somi, sizeof(somi));  // 사용자 요청
+                somi[strcspn(somi, "\n")] = '\0';
+                if (strcmp(somi, "1") == 0) //모든도서확인하기
+                {
+
+                    send(client_socket,&book_count,sizeof(int),0);
+            
+                    for (int i = 0; i < book_count; i++)
+                    {
+                        write(client_socket, &books[i], sizeof(Book));
+                    }
+
+                }
+                if (strcmp(somi, "2") == 0) // 도서검색하기
+                {
+                    char key[50], val[100];
+                    read(client_socket, key, sizeof(key));
+                    read(client_socket, val, sizeof(val));
+                    printf("%s %s\n",key, val);
+                    Book *p_found = NULL;
+                    int count = search_books_count(key, val);
+                    p_found = malloc(sizeof(Book)*count);
+                    write(client_socket, &count, sizeof(int));
+                    search_books(key, val, p_found);
+                    for (int i = 0; i < count; i++)
+                    {
+                        write(client_socket, &p_found[i], sizeof(Book));
+                    }
+                    free(p_found);
+                }
+                else if (strcmp(somi, "3") == 0) // 도서수정하기
+                {
+                    Book b;
+                    read(client_socket, &b, sizeof(Book));
+                    result = add_book(b);
+                    write(client_socket, &result, sizeof(int));
+                } 
+                else if (strcmp(somi, "4") == 0)
+                {
+                    char isbn[200];
+                    read(client_socket, isbn, sizeof(char));
+                    result = delete_book(isbn);
+                    write(client_socket, &result, sizeof(int));
+                } 
+                else if (strcmp(somi, "5") == 0)
+                {
+                    Book b;
+                    read(client_socket, &b, sizeof(Book));
+                    result = modify_book(b);
+                    write(client_socket, &result, sizeof(int));
+                }
+                else if (strcmp(somi, "6") == 0)
+                {
+                    break;
+                }
+            }
+            else if (strcmp(action, "2") == 0) // 모든계정관리
+            {
+                send(client_socket,&user_count,sizeof(int),0);              
+                if (send(client_socket,(struct User*)&Users,sizeof(Users),0)  == -1) {
+                    perror("send");
+                    exit(1);
+                }
+            }
+            else if (strcmp(action, "3") == 0) // 도서관오픈관리
+            {
+                break;
+            }
+            else if (strcmp(action, "4") == 0) // 대출자정보
+            {
+                break;
+            }
+            else if (strcmp(action, "5") == 0) // 로그아웃
             {
                 break;
             }   
         }
     }
-    else if (result == 3 && strcmp(cmd, "login") == 0) { //사러로 로그인했을때 기능
-
-       
+    else if (result == 3 && strcmp(cmd, "login") == 0) { //사서로 로그인했을때 기능
         while (1) {
-           
-            int action;
-            // printf("와일문 1\n");
-            // printf("action값은? %d\n",action);
-            // printf("result :%d cmd : %s\n", result, cmd);
+            char action[16];
+            read(client_socket, action, sizeof(action));  // 사용자 요청
+            action[strcspn(action, "\n")] = '\0';
 
-            cmd[strcspn(cmd, "\n")] = 0;
-            // client 1을 보냈는데 왜 0으로 받냐 ㅠ
-            read(client_socket, cmd, sizeof(cmd)); 
-            //read 2번해야 제대로 읽음
-            read(client_socket, cmd, sizeof(cmd));  // 사용자 요청
-             // 사용자 요청
-            printf("로그 cmd값은? :%s",cmd);
-
-            if (result == 3 && strcmp(cmd,"get_books")==0)
+            if (strcmp(action, "5") == 0) // 로그아웃
             {
-                FILE *fp = fopen("DATA.json", "r");      // 파일 열기
-                if (!fp) return 0;                    // 파일이 없으면 0 리턴
-
-                fseek(fp, 0, SEEK_END);               // 파일 끝으로 이동
-                long len = ftell(fp);                // 파일 길이 측정
-                rewind(fp);                           // 다시 파일 처음으로 이동
-
-                char *data = malloc(len + 1);         // JSON 데이터 저장할 메모리 할당
-                fread(data, 1, len, fp);              // 파일 데이터 읽기
-                fclose(fp);                           // 파일 닫기
-                data[len] = '\0';                    // 문자열 종료 문자
-
-                cJSON *root = cJSON_Parse(data);      // JSON 파싱
-                if (!root) return 0;  
-                
-                if (!root) return 0;                  // 파싱 실패 시 0 반환
-
-                int count = 0;
-                cJSON *book;
-                
-                //구조체에 담기 위한 코드 
-                cJSON_ArrayForEach(book, root) {      // JSON 배열 순회
-                    books[count].no = cJSON_GetObjectItem(book, "No")->valueint;
-                    strcpy(books[count].title, cJSON_GetObjectItem(book, "제목")->valuestring);  
-                    strcpy(books[count].author, cJSON_GetObjectItem(book, "저자")->valuestring);
-                    strcpy(books[count].publisher, cJSON_GetObjectItem(book, "출판사")->valuestring);
-                    books[count].pub_year = cJSON_GetObjectItem(book, "출판년")->valueint;
-                    books[count].num_books = cJSON_GetObjectItem(book, "권")->valueint;
-                    strcpy(books[count].isbn, cJSON_GetObjectItem(book, "ISBN")->valuestring);
-                    strcpy(books[count].extra_n, cJSON_GetObjectItem(book, "부가기호")->valuestring);
-                    strcpy(books[count].kdc, cJSON_GetObjectItem(book, "KDC")->valuestring);
-                    strcpy(books[count].kdc_subject, cJSON_GetObjectItem(book, "KDC 주제명")->valuestring);
-                    books[count].loan_frequency = cJSON_GetObjectItem(book, "대출 빈도")->valueint;
-                    
-                    count++;                                                                // 도서 수 증가
-                }
-
-                cJSON_Delete(root);            // JSON 객체 해제
-                free(data);    
-
-
-
-            } 
-            break;
-            
-
-            
-
+                break;
+            }   
         }
     }
 
@@ -471,6 +573,13 @@ void *client_handler(void *arg) {
 // 메인 함수 - 서버 실행
 int main() {
     load_books("DATA.json");  // 도서 데이터 불러오기
+    load_user("users.json");  // 유저 데이터 불러오기
+
+    // for (int i=0;i<book_count;i++)
+    // {
+    // printf(" %d\n %s\n %s\n %s\n %d\n %d\n %s\n %s\n %s\n %s\n %d\n", books[i].no, books[i].title, books[i].author, books[i].publisher, books[i].pub_year,
+    // books[i].num_books, books[i].isbn, books[i].extra_n, books[i].kdc, books[i].kdc_subject, books[i].loan_frequency);
+    // }
     int server_fd = socket(PF_INET, SOCK_STREAM, 0);  // 소켓 생성
     struct sockaddr_in address = {0};                 // 주소 구조체 초기화
     address.sin_family = AF_INET;                     // IPv4 사용
