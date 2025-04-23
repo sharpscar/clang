@@ -7,7 +7,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 2222   // 서버 포트
+#define PORT 5555   // 서버 포트
 #define MAX_LOANS 100  // 대출 가능한 최대 도서 수
 #define MAX_USERS 500
 
@@ -366,31 +366,32 @@ int main() {
                     if (strcmp(cmd, "2") == 0) // 모든계정관리
                     {
                         int count_2 = 0;
-                            read(sock, &count_2, sizeof(int));
-                            User *all_2 = NULL;
-                            all_2 = malloc(sizeof(User)*count_2);
-                            if (count_2>0)
+                        read(sock, &count_2, sizeof(int));
+                        User *all_2 = NULL;
+                        all_2 = malloc(sizeof(User)*count_2);
+                        if (count_2>0)
+                        {
+                            for (int i = 0; i < count_2; i++)
                             {
-                                for (int i = 0; i < count_2; i++)
-                                {
-                                    read(sock, &all_2[i], sizeof(User));
-                                }
-                                for(int i = 2;i<count_2;i++){
-                                    printf("%d.아이디 %s, 이름 %s, 나이 %d, 핸드폰번호 %s 주소 %s\n",i-1,all_2[i].id,all_2[i].
-                                    name,all_2[i].age,all_2[i].phone,all_2[i].addr);
-                                }
-
-
-
+                                read(sock, &all_2[i], sizeof(User));
+                            }
+                            for(int i = 2;i<count_2;i++){
+                                printf("%d.아이디 %s, 이름 %s, 나이 %d, 핸드폰번호 %s 주소 %s\n",i-1,all_2[i].id,all_2[i].
+                                name,all_2[i].age,all_2[i].phone,all_2[i].addr);
+                            }
 
 
                             //    
                             printf("1.수정하기 2.추가하기");
 
                             scanf("%s", cmd);
-
+                            char sub_action[16];
                             if(strcmp(cmd, "1")==0)
                             {
+                                
+                                strcpy(sub_action, "1");
+                                send(sock, sub_action, sizeof(sub_action),0);
+
                                 char  user_id_for_modify[16];
                                 printf("수정할 유저의 아이디를 입력하세요\n");
                                 scanf("%s", user_id_for_modify);
@@ -462,24 +463,83 @@ int main() {
                                             printf("수정이 완료되었습니다.\n");
                                         }
 
+                                      
                                     
                                     }else{
                                         printf("찾고자하는 유저가 없습니다.");
                                     }
 
-                                    //수정 완료 정보 수신대기
-
-                                    //수정 완료 수신후 유저에게 수정완료 출력
-
-                                    // 유저리스트 재출력
-
-
-
                                 }   
                             }
-                            
-                                    
+                            //  계정추가
+                            else if(strcmp(cmd, "2")==0)
+                            {
+                                strcpy(sub_action, "2");
+                                send(sock, sub_action, sizeof(sub_action),0);
+                                printf("유저를 추가를 선택하셨습니다.\n");
+
+                                User user_for_add;
+                                
+                                printf("유저 아이디를 입력해주세요\n");
+                                getchar();
+                                gets(user_for_add.id);
+
+                                printf("유저 패스워드를 입력해주세요\n");
+                                getchar();
+                                gets(user_for_add.pw);
+
+                                printf("유저명을 입력해주세요\n");
+                                // scanf("%[^\n]s",modi_user.name);
+                                gets(user_for_add.name);
+
+                                printf("유저 나이를 입력해주세요\n");
+                                char age[16];
+                                // scanf("%[^\n]s",age);
+                                gets(age);
+                                user_for_add.age = atoi(age);
+                                printf("유저의 전화번호를 입력해주세요\n");
+                                // scanf("%[^\n]s",modi_user.phone);
+                                gets(user_for_add.phone);
+                                printf("유저의 주소를 입력해주세요\n");
+                                // scanf("%[^\n]s",modi_user.addr);
+                                gets(user_for_add.addr);
+                                
+                                user_for_add.msc=1;
+
+                            // 입력검증
+                            if( (strlen(user_for_add.id)<=0) || (strlen(user_for_add.pw)<=0) || (strlen(user_for_add.name)<=0) || (user_for_add.age <= 0) || (strlen(user_for_add.phone)<=0) || (strlen(user_for_add.phone)<=0)) 
+                            {
+                                printf("유저 입력이 잘못되었습니다.");
+                                sleep(1);
                             }
+                            
+                            // 구조체를 서버로 보내기 
+                            send(sock,&user_for_add,sizeof(user_for_add),0 );
+                            
+
+                            
+
+                            // 잘들어갔으면 결과를 받아서 출력
+                            int user_add_result;
+                            read(sock,&user_add_result, sizeof(user_add_result));
+
+                            if(user_add_result)
+                            {
+                                printf("계정이 잘 추가 되었습니다. \n");
+                            }
+                                
+
+                        }//계정 추가 끝
+
+
+
+
+
+
+
+
+                                    
+                        }// 유저의 수가 0보다 클때 if문 372라인 
                             else
                             {
                                 printf("검색 결과가 없습니다.\n");

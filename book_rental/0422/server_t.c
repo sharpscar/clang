@@ -14,7 +14,7 @@
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
 #define MAX_USERS 500
-#define PORT 2222             // 서버가 열릴 포트 번호
+#define PORT 5555             // 서버가 열릴 포트 번호
 #define SIZE 100
 
 // 도서 구조체 정의
@@ -172,7 +172,7 @@ int save_books(const char *filename) {
 int save_user(const char *filename) {
     cJSON *root = cJSON_CreateArray();
     for (int i = 0; i < user_count; i++) {
-        printf("in function save_user user_count %d\n", user_count);
+        
 
 
         cJSON *u = cJSON_CreateObject();                                   
@@ -592,105 +592,109 @@ void *client_handler(void *arg) {
                     write(client_socket, &Users[i], sizeof(User));
                     
                 }
-                
+                char sub_action[16];
+                read(client_socket, sub_action, sizeof(sub_action));
 
-                //여기서부터
-                char user_id_for_modify[16];
-                printf("1차 log1 \n");
-                // 수정을 원하는 계정의 아이디를 클라이언트로부터 받는다.
-                read(client_socket,user_id_for_modify, sizeof(user_id_for_modify));
-                printf("test log2 %s\n",user_id_for_modify );
-
-
-                
-                // 해당하는 유저가 있는지 확인한다.
-                // 해당 하는 유저가 있으면 1을 리턴 아니면 0을 리턴
-                int myresult; 
-                myresult = search_user_by_id(user_id_for_modify);
-                printf("search_user_by_id의 결과 ?: %d\n", myresult);
-                send(client_socket, &myresult, sizeof(int),0);
-                
-                
-                 
-                /*
-                 Users[user_count]반복문으로 ccnk 아이디의 인덱스를 찾아서
-                 해당 인덱스의 id/pw를 따로 저장해둠 
-                 그리고 해당 배열을 제거
-                 그리고 받은 유저정보를 추가할때 idpw 넣자 
-                */
-                char id_[50];
-                char pw_[50];
-                int flag_for_delete =0;
-                int index_for_delete=0;
-                for (int i=0; i<user_count; i++)
-                {   
-                    // user_id_for_modify 와 같은 index를 가져와라!
-                    if(strcmp(Users[i].id, user_id_for_modify)==0)
-                    {
-                        strcpy(id_,Users[i].id);
-                        strcpy(pw_,Users[i].pw);
-                        index_for_delete = i;
-                        flag_for_delete = 1;
-                    }
-                }
-                printf("log4 수정할 아이디%s\n",user_id_for_modify);
-                printf("log4 저장된 아이디 %s\n", id_);
-                printf("log4 저장된 pw %s\n", pw_);
-                printf("log4 지울녀석  인덱스 %d\n", index_for_delete);
-
-
-                printf("log4 삭제전 전체 유저수 %d\n", user_count);
-
-                // 클라이언트로부터 유저 정보를 받는ㄷ
-                User modi_user;
-                memset(&modi_user, 0, sizeof(User));
-                
-                read(client_socket, &modi_user, sizeof(modi_user));
-
-                strcpy(modi_user.id,id_);
-                strcpy(modi_user.pw,pw_);
-                
-                // 해당 아이디를 찾았을때만배열에서 제거
-                if(flag_for_delete)
+                if(strcmp(sub_action, "1")==0)
                 {
-                    for (int j=index_for_delete; j<user_count-1; j++)
+
+                    
+                    //여기서부터
+                    char user_id_for_modify[16];
+                    
+                    // 수정을 원하는 계정의 아이디를 클라이언트로부터 받는다.
+                    read(client_socket,user_id_for_modify, sizeof(user_id_for_modify));
+                    
+                    // 해당하는 유저가 있는지 확인한다.
+                    // 해당 하는 유저가 있으면 1을 리턴 아니면 0을 리턴
+                    int searched_user; 
+                    searched_user = search_user_by_id(user_id_for_modify);
+                    
+                    send(client_socket, &searched_user, sizeof(int),0);
+                    
+                    /*
+                    Users[user_count]반복문으로 ccnk 아이디의 인덱스를 찾아서
+                    해당 인덱스의 id/pw를 따로 저장해둠 
+                    그리고 해당 배열을 제거
+                    그리고 받은 유저정보를 추가할때 idpw 넣자 
+                    */
+                    char id_[50];
+                    char pw_[50];
+                    int flag_for_delete =0;
+                    int index_for_delete=0;
+                    for (int i=0; i<user_count; i++)
                     {   
-                        Users[j]=Users[j+1];
+                        // user_id_for_modify 와 같은 index를 가져와라!
+                        if(strcmp(Users[i].id, user_id_for_modify)==0)
+                        {
+                            strcpy(id_,Users[i].id);
+                            strcpy(pw_,Users[i].pw);
+                            index_for_delete = i;
+                            flag_for_delete = 1;
+                        }
                     }
+                    // 클라이언트로부터 유저 정보를 받는ㄷㅏ
+                    User modi_user;
+                    memset(&modi_user, 0, sizeof(User));
+                    
+                    read(client_socket, &modi_user, sizeof(modi_user));
+
+                    strcpy(modi_user.id,id_);
+                    strcpy(modi_user.pw,pw_);
+                    
+                    // 해당 아이디를 찾았을때만배열에서 제거
+                    if(flag_for_delete)
+                    {
+                        for (int j=index_for_delete; j<user_count-1; j++)
+                        {   
+                            Users[j]=Users[j+1];
+                        }
+                    }
+                    user_count= user_count-1;
+                    
+
+                    // modi_user.id가 비어있으면 넣으면 안됨
+                    if(strcmp(modi_user.id," ")!=0 || modi_user.id !=NULL)
+                    {
+                        memcpy(&Users[user_count],&modi_user, sizeof(User));
+                    }
+                    user_count = user_count +1; //억지로 최종카운트를 추가해준다.
+            
+                    save_user("users.json");
+
+                    // 수정이 완료었다면 클라이언트에 응답으로 1을 넘긴다.
+                    searched_user = 1;
+                    send(client_socket,&searched_user, sizeof(searched_user),0);
+                }//sub_action == 1 
+                else if(strcmp(sub_action,"2")==0)
+                {
+                    
+                    //아이디 추가
+                    printf("log5 아이디 추가로 들어옴\n");
+                    User user_for_add;
+                    memset(&user_for_add, 0, sizeof(User));
+                    read(client_socket, &user_for_add, sizeof(user_for_add));
+                    printf("log 1 정보를 받았다. \n");
+                    
+
+                    // 구조체 끝부분에 넣는다.
+                    if((strlen(user_for_add.id)>=0) && (user_for_add.id !=NULL))
+                    {
+                        memcpy(&Users[user_count],&user_for_add, sizeof(User));
+                    }
+                    user_count = user_count +1;
+
+                    int is_added;
+                    // 파일 생성한다.
+                    is_added = save_user("users.json");
+
+                    // 클라이언트에 유저 추가 했다는 메시지 보낸다.
+                    send(client_socket,&is_added, sizeof(is_added),0);
+                    
+                    
+
+
                 }
-                user_count= user_count-1;
-                printf("user_count? %d\n", user_count);
-                 //아직 Users구조체 배열에 넣기전 ccnk4 회원의 자료를 확인
-                printf("log5    %s\n",modi_user.id);
-                printf("log5    %s\n",modi_user.name);
-                printf("log5    %s\n",modi_user.pw);
-                printf("log5    %s\n",modi_user.phone);
-                printf("log5    %s\n",modi_user.addr);
-                printf("log5    %d\n",modi_user.msc);
-
-                memcpy(&Users[user_count],&modi_user, sizeof(User));
-                user_count = user_count +1; //억지로 최종카운트를 추가해준다.
-                // Users[user_count]=modi_user; //수정한 유저 맨끝에 추가
-                // 추가후 구조체 배열 마지막 확인 
-                printf("Users[k].id   :%s\n",Users[user_count-1].id);
-                printf("Users[k].name   :%s\n",Users[user_count-1].name);
-                printf("Users[k].pw   :%s\n",Users[user_count-1].pw);
-                printf("Users[k].phone   :%s\n",Users[user_count-1].phone);
-                printf("Users[k].addr   :%s\n",Users[user_count-1].addr);
-                printf("Users[k].msc   :%d\n",Users[user_count-1].msc);
-                   
-                // }
-                //구조체에는 넣었는데 파일엔 안들어간다.? 추가후 user_count는 몇개일까
-                printf("log 6 user_count : %d\n", user_count);
-                printf("log 6 Users[user_count].name %s\n ",Users[user_count].name); //kknd4가나와야하지
-
-                
-                save_user("users.json");
-
-                // 수정이 완료었다면 클라이언트에 응답으로 1을 넘긴다.
-                myresult = 1;
-                send(client_socket,&myresult, sizeof(myresult),0);
-
             }
             else if (strcmp(action, "3") == 0) // 도서관오픈관리
             {
