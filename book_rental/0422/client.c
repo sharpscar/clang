@@ -7,7 +7,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 9000  // 서버 포트
+#define PORT 2222   // 서버 포트
 #define MAX_LOANS 100  // 대출 가능한 최대 도서 수
 #define MAX_USERS 500
 
@@ -58,6 +58,12 @@ typedef struct {
 void clear_newline(char *str) {
     str[strcspn(str, "\n")] = 0; // Remove the newline character
 }
+
+// void phonnum_star(char phone[]){ //핸드폰 중간자리 가운데 별
+//     for(int i = 4;i < 8; i++){
+//         phone[i] = "*";             
+//     }
+// }
 
 int main() {
     int sock;
@@ -360,16 +366,128 @@ int main() {
                     if (strcmp(cmd, "2") == 0) // 모든계정관리
                     {
                         int count_2 = 0;
-                        recv(sock,&count_2,sizeof(int),0);
-                        recv(sock,(struct User*)&Users,sizeof(Users),0);
-                        for(int i = 2;i<count_2;i++){
-                            printf("%d.아이디 %s, 이름 %s, 나이 %d, 핸드폰번호 %s 주소 %s\n",i-1,Users[i].id,Users[i].name,Users[i].age,Users[i].phone,Users[i].addr);
-                        }
-                        User*Users=(User*)malloc(sizeof(User));
-                        memset(Users,0,sizeof(User));
-                        
+                            read(sock, &count_2, sizeof(int));
+                            User *all_2 = NULL;
+                            all_2 = malloc(sizeof(User)*count_2);
+                            if (count_2>0)
+                            {
+                                for (int i = 0; i < count_2; i++)
+                                {
+                                    read(sock, &all_2[i], sizeof(User));
+                                }
+                                for(int i = 2;i<count_2;i++){
+                                    printf("%d.아이디 %s, 이름 %s, 나이 %d, 핸드폰번호 %s 주소 %s\n",i-1,all_2[i].id,all_2[i].
+                                    name,all_2[i].age,all_2[i].phone,all_2[i].addr);
+                                }
 
+
+
+
+
+                            //    
+                            printf("1.수정하기 2.추가하기");
+
+                            scanf("%s", cmd);
+
+                            if(strcmp(cmd, "1")==0)
+                            {
+                                char  user_id_for_modify[16];
+                                printf("수정할 유저의 아이디를 입력하세요\n");
+                                scanf("%s", user_id_for_modify);
+                                // send(sock, user_id_for_modify, sizeof(user_id_for_modify),0);
+                                
+                                char answer[16];
+                                printf("입력한 아이디는?%s입니다 수정하시겠습니까?[y/n]\n", user_id_for_modify);
+                                scanf("%s", answer);
+
+                                getchar();
+                                if(strcmp(answer, "y")==0)
+                                {
+                                    
+                                    
+                                    //유저 아이디를 보낸다 send1
+                                   
+                                    send(sock, user_id_for_modify, sizeof(user_id_for_modify),0);
+                                    printf("y를 눌렀고 이미 1차 아이디를  보냄\n");
+                                    // 서버로부터 받은 유저 검색결과 있으면 1없으면 0
+                                    int user_result= 0;
+                                    read(sock,&user_result, sizeof(result));
+                                    printf("log3 해당유저가 있다?없다?%d\n", user_result);
+                                    if(user_result)
+                                    {
+                                        User modi_user;
+                                        printf("유저명을 입력해주세요\n");
+                                        // scanf("%[^\n]s",modi_user.name);
+                                        gets(modi_user.name);
+
+                                        printf("유저 나이를 입력해주세요\n");
+                                        char age[16];
+                                        // scanf("%[^\n]s",age);
+                                        gets(age);
+                                        modi_user.age = atoi(age);
+                                        printf("유저의 전화번호를 입력해주세요\n");
+                                        // scanf("%[^\n]s",modi_user.phone);
+                                        gets(modi_user.phone);
+                                        printf("유저의 주소를 입력해주세요\n");
+                                        // scanf("%[^\n]s",modi_user.addr);
+                                        gets(modi_user.addr);
+                                        modi_user.msc=1;
+
+                                        //전송 보내기전 무결성검사 수행
+                                        if(strlen(modi_user.name)<=0 || modi_user.name ==NULL )
+                                        {
+                                            printf("유저 이름이 입력되지 않았습니다.\n");
+                                        }else if( 0 || modi_user.age <=0)
+                                        {
+                                            printf("유저 나이가 입력되지 않았습니다.\n");
+                                        }
+                                        else if( strlen(modi_user.phone)<=0 || modi_user.phone ==NULL )
+                                        {
+                                            printf("유저 전번이 입력되지 않았습니다.\n");
+                                        }
+                                        else if( strlen(modi_user.addr)<=0 || modi_user.addr ==NULL )
+                                        {
+                                            printf("유저 주소가 입력되지 않았습니다.\n");
+                                        }
+                                        //무결성 완료
+
+                                        // send 2
+                                        send(sock,&modi_user,sizeof(modi_user),0 );
+
+                                        // 수정결과
+                                        read(sock,&user_result, sizeof(user_result));
+
+                                        if(user_result)
+                                        {
+                                            printf("수정이 완료되었습니다.\n");
+                                        }
+
+                                    
+                                    }else{
+                                        printf("찾고자하는 유저가 없습니다.");
+                                    }
+
+                                    //수정 완료 정보 수신대기
+
+                                    //수정 완료 수신후 유저에게 수정완료 출력
+
+                                    // 유저리스트 재출력
+
+
+
+                                }   
+                            }
+                            
+                                    
+                            }
+                            else
+                            {
+                                printf("검색 결과가 없습니다.\n");
+
+                            } 
+                            free(all_2);
                     }
+                    //모든유저관리 끝  
                     if (strcmp(cmd, "3") == 0) // 도서관오픈관리
                     {
                        
@@ -402,7 +520,24 @@ int main() {
                 }
                 else if (strcmp(cmd, "3") == 0) // 모든계정관리
                 {
-                    break;
+                    int count_2 = 0;
+                    read(sock, &count_2, sizeof(int));
+                    User *all_2 = NULL;
+                    all_2 = malloc(sizeof(User)*count_2);
+                    if (count_2>0)
+                    {
+                        for (int i = 0; i < count_2; i++)
+                        {
+                            read(sock, &all_2[i], sizeof(User));
+                        }
+                        for(int i = 2;i<count_2;i++){
+                            printf("%d.아이디 %s, 이름 %s, 나이 %d, 핸드폰번호 %s 주소 %s\n",i-1,all_2[i].id,all_2[i].
+                            name,all_2[i].age,all_2[i].phone,all_2[i].addr);
+                        }     
+                    }
+                    else
+                    printf("검색 결과가 없습니다.\n");
+                    free(all_2);
                 }
                 else if (strcmp(cmd, "4") == 0) // 메세지
                 {

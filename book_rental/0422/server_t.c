@@ -14,7 +14,7 @@
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
 #define MAX_USERS 500
-#define PORT 9000             // 서버가 열릴 포트 번호
+#define PORT 2222             // 서버가 열릴 포트 번호
 #define SIZE 100
 
 // 도서 구조체 정의
@@ -56,6 +56,8 @@ User Users[MAX_USERS];
 int book_count = 0;             // 현재 등록된 도서 수
 int user_count = 0; // 현재 등록된 유저 수
 pthread_mutex_t book_mutex = PTHREAD_MUTEX_INITIALIZER;  // 도서 데이터 접근 동기화를 위한 뮤텍스
+
+int search_user_by_id(char *user_id);
 
 // 도서 목록을 JSON 파일에서 불러오는 함수
 int load_books(const char *filename) {
@@ -160,6 +162,43 @@ int save_books(const char *filename) {
     cJSON_Delete(root);                           // JSON 배열 해제
     return 1;
 }
+/**
+ * pthread_mutex_lock(&book_mutex);          // 쓰레드 동기화를 위한 뮤텍스 잠금
+    books[book_count++] = b;                  // 배열에 도서 추가
+    save_books("DATA.json");             // 저장
+    pthread_mutex_unlock(&book_mutex);
+ */
+// 유저 목록을 JSON 파일로 저장하는 함수
+int save_user(const char *filename) {
+    cJSON *root = cJSON_CreateArray();
+    for (int i = 0; i < user_count; i++) {
+        printf("in function save_user user_count %d\n", user_count);
+
+
+        cJSON *u = cJSON_CreateObject();                                   
+        cJSON_AddStringToObject(u, "id", Users[i].id);
+        cJSON_AddStringToObject(u, "password", Users[i].pw);           
+        cJSON_AddStringToObject(u, "name", Users[i].name);
+        cJSON_AddNumberToObject(u, "age", Users[i].age);
+        cJSON_AddStringToObject(u, "phone", Users[i].phone);
+        cJSON_AddStringToObject(u, "addr", Users[i].addr);
+        cJSON_AddNumberToObject(u, "messagecount", Users[i].msc);
+        cJSON_AddItemToArray(root, u);      
+                                    // 배열에 추가
+    }
+
+    
+
+    char *out = cJSON_Print(root);                // JSON 문자열로 변환
+    FILE *fp = fopen(filename, "w");              // 파일 쓰기 모드로 열기
+    fputs(out, fp);                               // 파일에 저장
+    fclose(fp);                                   // 파일 닫기
+    free(out);                                    // 문자열 메모리 해제
+    cJSON_Delete(root);
+                               // JSON 배열 해제
+    return 1;
+}
+
 
 // 키워드로 도서 검색 후 갯수 반환
 int search_books_count(const char *key, const char *value) {
@@ -185,6 +224,18 @@ void search_books(const char *key, const char *value, Book *results) {
 
         }
     }
+}
+
+int search_user_by_id(char *user_id)
+{
+    for(int i=0; i<user_count; i++)
+    {
+        if(strcmp(Users[i].id, user_id)==0)
+        {
+            return 1; // 찾으면 1 리턴
+        }
+    }
+    return 0; //기본값은 못찾았는걸로
 }
 
 
@@ -533,11 +584,113 @@ void *client_handler(void *arg) {
             }
             else if (strcmp(action, "2") == 0) // 모든계정관리
             {
-                send(client_socket,&user_count,sizeof(int),0);              
-                if (send(client_socket,(struct User*)&Users,sizeof(Users),0)  == -1) {
-                    perror("send");
-                    exit(1);
+                
+                send(client_socket,&user_count,sizeof(int),0);
+
+                for (int i = 0; i < user_count; i++)
+                {
+                    write(client_socket, &Users[i], sizeof(User));
+                    
                 }
+                
+
+                //여기서부터
+                char user_id_for_modify[16];
+                printf("1차 log1 \n");
+                // 수정을 원하는 계정의 아이디를 클라이언트로부터 받는다.
+                read(client_socket,user_id_for_modify, sizeof(user_id_for_modify));
+                printf("test log2 %s\n",user_id_for_modify );
+
+
+                
+                // 해당하는 유저가 있는지 확인한다.
+                // 해당 하는 유저가 있으면 1을 리턴 아니면 0을 리턴
+                int myresult; 
+                myresult = search_user_by_id(user_id_for_modify);
+                printf("search_user_by_id의 결과 ?: %d\n", myresult);
+                send(client_socket, &myresult, sizeof(int),0);
+                
+                
+                 
+                /*
+                 Users[user_count]반복문으로 ccnk 아이디의 인덱스를 찾아서
+                 해당 인덱스의 id/pw를 따로 저장해둠 
+                 그리고 해당 배열을 제거
+                 그리고 받은 유저정보를 추가할때 idpw 넣자 
+                */
+                char id_[50];
+                char pw_[50];
+                int flag_for_delete =0;
+                int index_for_delete=0;
+                for (int i=0; i<user_count; i++)
+                {   
+                    // user_id_for_modify 와 같은 index를 가져와라!
+                    if(strcmp(Users[i].id, user_id_for_modify)==0)
+                    {
+                        strcpy(id_,Users[i].id);
+                        strcpy(pw_,Users[i].pw);
+                        index_for_delete = i;
+                        flag_for_delete = 1;
+                    }
+                }
+                printf("log4 수정할 아이디%s\n",user_id_for_modify);
+                printf("log4 저장된 아이디 %s\n", id_);
+                printf("log4 저장된 pw %s\n", pw_);
+                printf("log4 지울녀석  인덱스 %d\n", index_for_delete);
+
+
+                printf("log4 삭제전 전체 유저수 %d\n", user_count);
+
+                // 클라이언트로부터 유저 정보를 받는ㄷ
+                User modi_user;
+                memset(&modi_user, 0, sizeof(User));
+                
+                read(client_socket, &modi_user, sizeof(modi_user));
+
+                strcpy(modi_user.id,id_);
+                strcpy(modi_user.pw,pw_);
+                
+                // 해당 아이디를 찾았을때만배열에서 제거
+                if(flag_for_delete)
+                {
+                    for (int j=index_for_delete; j<user_count-1; j++)
+                    {   
+                        Users[j]=Users[j+1];
+                    }
+                }
+                user_count= user_count-1;
+                printf("user_count? %d\n", user_count);
+                 //아직 Users구조체 배열에 넣기전 ccnk4 회원의 자료를 확인
+                printf("log5    %s\n",modi_user.id);
+                printf("log5    %s\n",modi_user.name);
+                printf("log5    %s\n",modi_user.pw);
+                printf("log5    %s\n",modi_user.phone);
+                printf("log5    %s\n",modi_user.addr);
+                printf("log5    %d\n",modi_user.msc);
+
+                memcpy(&Users[user_count],&modi_user, sizeof(User));
+                user_count = user_count +1; //억지로 최종카운트를 추가해준다.
+                // Users[user_count]=modi_user; //수정한 유저 맨끝에 추가
+                // 추가후 구조체 배열 마지막 확인 
+                printf("Users[k].id   :%s\n",Users[user_count-1].id);
+                printf("Users[k].name   :%s\n",Users[user_count-1].name);
+                printf("Users[k].pw   :%s\n",Users[user_count-1].pw);
+                printf("Users[k].phone   :%s\n",Users[user_count-1].phone);
+                printf("Users[k].addr   :%s\n",Users[user_count-1].addr);
+                printf("Users[k].msc   :%d\n",Users[user_count-1].msc);
+                   
+                // }
+                //구조체에는 넣었는데 파일엔 안들어간다.? 추가후 user_count는 몇개일까
+                printf("log 6 user_count : %d\n", user_count);
+                printf("log 6 Users[user_count].name %s\n ",Users[user_count].name); //kknd4가나와야하지
+
+                
+                save_user("users.json");
+
+                // 수정이 완료었다면 클라이언트에 응답으로 1을 넘긴다.
+                myresult = 1;
+                send(client_socket,&myresult, sizeof(myresult),0);
+
             }
             else if (strcmp(action, "3") == 0) // 도서관오픈관리
             {
@@ -559,7 +712,20 @@ void *client_handler(void *arg) {
             read(client_socket, action, sizeof(action));  // 사용자 요청
             action[strcspn(action, "\n")] = '\0';
 
-            if (strcmp(action, "5") == 0) // 로그아웃
+            if (strcmp(action, "1") == 0)
+            {
+                break;
+            }
+            else if (strcmp(action, "3") == 0) // 모든계정관리
+            {
+                send(client_socket,&user_count,sizeof(int),0);
+                
+                for (int i = 0; i < user_count; i++)
+                {
+                    write(client_socket, &Users[i], sizeof(User));
+                }
+            }
+            else if (strcmp(action, "5") == 0) // 로그아웃
             {
                 break;
             }   
