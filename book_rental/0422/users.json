@@ -86,4 +86,20 @@
 		"phone":	"202044040",
 		"addr":	"탑샤코",
 		"messagecount":	1
+	}, {
+		"id":	"123",
+		"password":	"123",
+		"name":	"",
+		"age":	0,
+		"phone":	"",
+		"addr":	"",
+		"messagecount":	0
+	}, {
+		"id":	"\u001b[B",
+		"password":	"",
+		"name":	"",
+		"age":	0,
+		"phone":	"",
+		"addr":	"",
+		"messagecount":	0
 	}]

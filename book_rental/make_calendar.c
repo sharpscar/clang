@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "cjson/cJSON.h"
+
 #define BOOK_SIZE 10000
 
 
@@ -48,15 +48,15 @@ int main()
     is_open_now()
     */
 
-    bussiness_month m4[31]; // 31 32 이렇게 다른 이유는 해당달이 며칠까지 있는지에 따라 다릅니다.
-    bussiness_month m5[32];
+    // bussiness_month m4[31]; // 31 32 이렇게 다른 이유는 해당달이 며칠까지 있는지에 따라 다릅니다.
+    // bussiness_month m5[32];
 
-    bussiness_month temp[32];
+    // bussiness_month temp[32];
 
-    set_calendar(m4,4);                  // m4를 달력 객체로 만들고    
-    make_json_file_for_bussiness(m4, 4); // 구조체를 참고하여 example_4.json 파일을 생성 
+    // set_calendar(m4,4);                  // m4를 달력 객체로 만들고    
+    // make_json_file_for_bussiness(m4, 4); // 구조체를 참고하여 example_4.json 파일을 생성 
     // set_calendar(m5,5);
-
+    // get_current_time();
     // make_json_file_for_bussiness(m4, 4);
 
     // // printf("%d",is_open_now(m4));
@@ -104,48 +104,56 @@ int main()
     // set_work_day(m4);
     // is_open_for_business(m4);  // 영업일인지 확인하는 함수
 
+    time_t timer = time(NULL);
+
+    struct tm* t = localtime(&timer);
+
+    
+    printf("현재 월: %d\n", t->tm_mon+1);
+    printf("현재 일: %d일 입니다.\n", t->tm_mday);
+    printf("현재 시 : %d시 입니다.\n", t->tm_hour);
 
     return 0;
 }
-void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
-{
-    char *json_string = read_json_file("example_4.json");
-    if(!json_string){
-        printf("jsonfile 읽다가 문제생김");
-    }
-    cJSON * json_array = cJSON_Parse(json_string);
+// void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
+// {
+//     char *json_string = read_json_file("example_4.json");
+//     if(!json_string){
+//         printf("jsonfile 읽다가 문제생김");
+//     }
+//     cJSON * json_array = cJSON_Parse(json_string);
     
-    if(!json_array ||!cJSON_IsArray(json_array)){
-        printf("JSON 파싱 실패 또는 배열이아님\n");
-        exit(1);
-    }
+//     if(!json_array ||!cJSON_IsArray(json_array)){
+//         printf("JSON 파싱 실패 또는 배열이아님\n");
+//         exit(1);
+//     }
 
-    int array_size = cJSON_GetArraySize(json_array);
+//     int array_size = cJSON_GetArraySize(json_array);
 
-    for(int i=0; i<array_size; i++)
-    {
-        cJSON *day = cJSON_GetArrayItem(json_array,i);
-        if(!cJSON_IsObject(day)) continue;
+//     for(int i=0; i<array_size; i++)
+//     {
+//         cJSON *day = cJSON_GetArrayItem(json_array,i);
+//         if(!cJSON_IsObject(day)) continue;
 
-        /*
-        "date" : "2025-4-1",
-        "day_" : "화",
-        "is_open" : 1
-        */
-        cJSON *d1 = cJSON_GetObjectItemCaseSensitive(day,"date");
-        cJSON *d2 = cJSON_GetObjectItemCaseSensitive(day,"day_");
-        cJSON *d3 = cJSON_GetObjectItemCaseSensitive(day,"is_open");
-        strcpy(m[i].date, d1->valuestring);
-        strcpy(m[i].day_, d2->valuestring);
-        m[i].is_open=d3->valueint;
+//         /*
+//         "date" : "2025-4-1",
+//         "day_" : "화",
+//         "is_open" : 1
+//         */
+//         cJSON *d1 = cJSON_GetObjectItemCaseSensitive(day,"date");
+//         cJSON *d2 = cJSON_GetObjectItemCaseSensitive(day,"day_");
+//         cJSON *d3 = cJSON_GetObjectItemCaseSensitive(day,"is_open");
+//         strcpy(m[i].date, d1->valuestring);
+//         strcpy(m[i].day_, d2->valuestring);
+//         m[i].is_open=d3->valueint;
 
-    }
+//     }
 
 
 
 
     
-}
+// }
 
 void make_json_file_for_bussiness(bussiness_month *m, int mon)
 {
@@ -315,17 +323,25 @@ void set_work_day(bussiness_month *m4)
 char *  get_current_time()
 {
 
+    
     time_t t= time(NULL);
+    
     struct tm tm_ = *localtime(&t);
+    
 //    current = (char*)malloc(sizeof(char)*10);
     // memset(current, 0, sizeof(current));
-    char str_t[100];
+    char buffer[256];
     char *current;
     char yoil[10];
+    
 
-    solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
-    // printf("ttttttttttttttttttttttttt%s", yoil);
-    sprintf(str_t,"%d-%d-%d %d:%02d:%02d", 
+    printf("%d월 %d일  요일 :%s \n",tm_.tm_mon+1, tm_.tm_mday, yoil) ;
+    // solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
+    
+    
+
+
+    sprintf(buffer,"%d-%d-%d %d:%02d:%02d", 
                 tm_.tm_year+1900,
                 tm_.tm_mon+1,
                 tm_.tm_mday,
@@ -334,10 +350,12 @@ char *  get_current_time()
                 tm_.tm_sec
             );
 
-    // printf("%s", str_t);
-    current = &str_t;
-    // strcpy(*current, str_t);
-    // printf("%s", current);
+    printf("%s", buffer);
+    printf("여기까지?");
+    // current = (char*)malloc(sizeof(char)*10);
+    current = &buffer;
+    strcpy(*current, buffer);
+    printf("%s", current);
 
     return current;
 
@@ -355,7 +373,7 @@ void set_calendar(bussiness_month *m, int mon)
     int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
 
     for(int i=0; i<DayOfMonth[mon-1]; i++)
-    {
+    {//31번 호출됨 
         sprintf(date_ ,"2025-%d-%d",mon,i);
         // printf("%s  ",date_);
         strcpy(m[i].date, date_);
@@ -398,7 +416,7 @@ void solution(int a, int b, char *c) {
    Total += b;
    
    strcpy(c,DayOfTheWeek[Total%7] );
-
+   
 }
 
 

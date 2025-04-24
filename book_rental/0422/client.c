@@ -1,13 +1,14 @@
 #include <stdio.h>              // 표준 입출력
 #include <stdlib.h>             // 메모리/문자열 함수
 #include <string.h>             // 문자열 처리 함수
+#include <time.h>
 #include <unistd.h>             // read(), write(), close() 등
 #include <netinet/in.h>         // sockaddr_in 구조체 정의
 #include <arpa/inet.h>          // inet_pton() 함수
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 5555   // 서버 포트
+#define PORT 6666   // 서버 포트
 #define MAX_LOANS 100  // 대출 가능한 최대 도서 수
 #define MAX_USERS 500
 
@@ -54,7 +55,7 @@ typedef struct {
     int is_open;  // 1이면 영업 0이면 휴일
 }bussiness_month;
 
-
+void solution(int a, int b, char *c) ;
 void clear_newline(char *str) {
     str[strcspn(str, "\n")] = 0; // Remove the newline character
 }
@@ -64,6 +65,76 @@ void clear_newline(char *str) {
 //         phone[i] = "*";             
 //     }
 // }
+
+int is_open_now(bussiness_month *m);
+char *  get_current_time();
+int is_open_now(bussiness_month *m)
+{
+    int flag=0;
+
+    time_t t= time(NULL);
+    struct tm tm_ = *localtime(&t);
+    char str_t[100];
+    char *current;
+    char yoil[10];
+
+    solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
+    
+    sprintf(str_t,"%d-%d-%d", 
+                tm_.tm_year+1900,
+                tm_.tm_mon+1,
+                tm_.tm_mday                
+            );
+    
+
+        
+    //해당 날짜가 영업일인가? 맞으면 flag =1
+    for(int i=0; i<31;i++)
+    {
+        
+        if(strcmp(m[i].date, str_t)==0)
+        {
+            if(m[i].is_open ==1)
+            {
+                flag = 1;
+        
+            }else{
+                flag = 0;
+        
+            }
+        }
+    }
+    // 현재 시간이 8~18시 사이인가? 맞으면 1 틀리면 0
+    if ( (tm_.tm_hour > 8) &&(tm_.tm_hour < 18))
+    {
+        flag = 1;
+    }else{
+        flag = 0;
+    }   
+    // printf("%d",flag);
+    return flag;
+   
+}
+
+
+
+
+
+/** 4월달 요일을 뱉는 함수 */
+void solution(int a, int b, char *c) {
+    char *DayOfTheWeek[] = {"일","월","화","수","목", "금","토"};
+    int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
+    int Total = 0;
+    // printf("%d\n", a);
+   char the_day[10];
+   while(a>0){
+    Total +=DayOfMonth[--a];
+   }   
+   Total += b;
+   
+   strcpy(c,DayOfTheWeek[Total%7] );
+
+}
 
 int main() {
     int sock;
@@ -531,13 +602,6 @@ int main() {
 
                         }//계정 추가 끝
 
-
-
-
-
-
-
-
                                     
                         }// 유저의 수가 0보다 클때 if문 372라인 
                             else
@@ -547,7 +611,7 @@ int main() {
                             } 
                             free(all_2);
                     }
-                    //모든유저관리 끝  
+                    //모든계정관리 끝  
                     if (strcmp(cmd, "3") == 0) // 도서관오픈관리
                     {
                        
@@ -576,7 +640,93 @@ int main() {
                 }
                 else if (strcmp(cmd, "2") == 0) // 대출정보
                 {
-                    break;
+                    bussiness_month *m4 = NULL;
+                    m4 = malloc(sizeof(bussiness_month)*31);
+                    int m4_freeflag =1;
+                    while(1){
+                        //특정조건에 오늘이 운영날짜가 아니면 break;
+                        //m4 구조체(달력)을 서버에서 던져주면
+                        // 클라에서 받아서 확인해서 오늘이 운영하는날이 아니면 텍스트 출력
+                        
+                        //오픈관리 시작
+                        char action[16];
+                        strcpy(action, "2");
+                        send(sock, action, sizeof(action),0);
+                        printf("오픈관리를 선택하셨습니다.\n");
+
+                        time_t timer = time(NULL);
+
+                        struct tm* t = localtime(&timer);
+
+                        
+                        // printf("월: %d\n", t->tm_mon+1);
+                        // printf("일: %d일 입니다.\n", t->tm_mday);
+                        // printf("시 : %d시 입니다.\n", t->tm_hour);
+
+                        char time_str[250];
+                        sprintf(time_str, "%d월 %d일 %d시 입니다.\n",t->tm_mon+1, t->tm_mday, t->tm_hour);
+                        printf("금일 날짜는 %s\n",time_str);
+
+                        int day_of_4month=32; //1부터 31까지 30개
+                        
+                        // 달력 정보를 수신
+                        for (int i = 1; i < day_of_4month; i++)
+                        {
+                            read(sock, &m4[i], sizeof(bussiness_month));
+                        }
+
+                        //오늘 날짜를 문자열로 바꿈
+                        char day[10];
+                        sprintf(day, "%d", t->tm_mday);
+                        char holiday[50];
+
+                        for(int i = 1;i<day_of_4month;i++){
+                            // printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
+                            
+                            // printf("%s\n", m4[i].date);
+                            // printf("%d\n", t->tm_m);
+
+                            if(strstr(m4[i].date,day))
+                            {
+                                
+                                if(m4[i].is_open)
+                                {
+                                    strcpy(holiday, "영업일 입니다.");
+                                }else
+                                {   
+                                    strcpy(holiday, "휴일 입니다.");
+                                }
+                            }
+                            
+                        }
+
+                        printf("금일은  %s \n",holiday);
+
+                        //버퍼비우기
+                        // while(getchar() !='\n');
+                        // getchar();
+
+                        
+                        
+                        //오늘 날짜와 시간을 가져옵시다
+
+                        // //4월 운영일을 찾습니다. 
+                        // int is_open;
+                        // is_open = is_open_now(m4);
+                        // if(is_open)
+                        // {
+                        //     printf("운영중입니다.");
+                        // }
+                        // else{
+                        //     printf("운영중이 아닙니다.");
+                        // }
+
+                        break;
+                    }
+
+                    m4=NULL;
+                    free(m4);
+                    m4=NULL;
                 }
                 else if (strcmp(cmd, "3") == 0) // 모든계정관리
                 {

@@ -14,7 +14,7 @@
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
 #define MAX_USERS 500
-#define PORT 5555             // 서버가 열릴 포트 번호
+#define PORT 6666             // 서버가 열릴 포트 번호
 #define SIZE 100
 
 // 도서 구조체 정의
@@ -58,6 +58,10 @@ int user_count = 0; // 현재 등록된 유저 수
 pthread_mutex_t book_mutex = PTHREAD_MUTEX_INITIALIZER;  // 도서 데이터 접근 동기화를 위한 뮤텍스
 
 int search_user_by_id(char *user_id);
+void set_calendar(bussiness_month *m, int mon);
+void make_json_file_for_bussiness(bussiness_month *m, int mon);
+void set_calendar(bussiness_month *m, int mon);
+void solution(int a, int b, char *c);
 
 // 도서 목록을 JSON 파일에서 불러오는 함수
 int load_books(const char *filename) {
@@ -169,6 +173,8 @@ int save_books(const char *filename) {
     pthread_mutex_unlock(&book_mutex);
  */
 // 유저 목록을 JSON 파일로 저장하는 함수
+
+
 int save_user(const char *filename) {
     cJSON *root = cJSON_CreateArray();
     for (int i = 0; i < user_count; i++) {
@@ -197,6 +203,95 @@ int save_user(const char *filename) {
     cJSON_Delete(root);
                                // JSON 배열 해제
     return 1;
+}
+
+
+void make_json_file_for_bussiness(bussiness_month *m, int mon)
+{
+    int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
+    char file_name[50];
+    sprintf(file_name, "example_%d.json", mon);
+    FILE *fp = fopen(file_name, "w");
+
+    
+    fprintf(fp, "[");
+    
+    for(int i=1; i<(DayOfMonth[mon-1]+1);i++) 
+    {
+        fprintf(fp,"{\n");
+        fprintf(fp, "\"date\" : \"%s\",\n",m[i].date);
+        fprintf(fp, "\"day_\" : \"%s\",\n",m[i].day_);
+        fprintf(fp, "\"is_open\" : %d\n",m[i].is_open);
+        if (i<DayOfMonth[mon-1]) //5월일땐 31로 변경해야함
+        {
+            /* code */
+            fprintf(fp, "},\n");
+        }else{
+            fprintf(fp, "}\n");
+        }                
+    }
+
+    fprintf(fp, "]\n"); //전체닫기
+    fclose(fp);
+}
+
+
+void set_calendar(bussiness_month *m, int mon)
+{
+
+    // bussiness_month_4 m4[32];
+    //달력 배열은 30개  날짜별로  날짜 , 요일, 영업유무를 담는다.
+
+    //날짜와 요일을 만들고 영업유무에 값을 넣는 함수를 만든다. 
+    char date_[50];
+    char day_[10];
+    int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
+
+    for(int i=1; i<DayOfMonth[mon-1]+2; i++)
+    {
+        sprintf(date_ ,"2025-%d-%d",mon,i);
+        // printf("%s  ",date_);
+        strcpy(m[i].date, date_);
+        solution(mon,i, day_);  //날짜를 넣어서 
+        // printf("%s\n", day_);        
+        strcpy(m[i].day_,day_);        
+
+
+        if((strcmp(m[i].day_,"토")==0)||(strcmp(m[i].day_,"일")==0))
+        {
+            m[i].is_open = 0;
+            // printf("휴일입니다.\n");
+        }else{
+            m[i].is_open = 1;
+            // printf("영업일입니다.\n");
+        }
+    }
+    // for(int i=1; i<31; i++)
+    // {
+    //     printf("날짜: %s  ",m4[i].date);
+    //     printf("%s 요일:",m4[i].day_);
+    //     printf("영업 유무 %d \n",m4[i].is_open);
+    // }
+
+}
+
+
+/** 4월달 요일을 뱉는 함수 */
+void solution(int a, int b, char *c) {
+    char *DayOfTheWeek[] = {"일","월","화","수","목", "금","토"};
+
+    int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
+    int Total = 0;
+    // printf("%d\n", a);
+   //    a--;
+   char the_day[10];
+   while(a>0){
+    Total +=DayOfMonth[--a];
+   }   
+   Total += b;
+   
+   strcpy(c,DayOfTheWeek[Total%7] );
+
 }
 
 
@@ -470,7 +565,7 @@ void *client_handler(void *arg) {
                         char *addr = cJSON_GetObjectItem(user, "addr")->valuestring;
                         User user_info;
                         
-
+                        strcpy(user_info.id ,uid);
                         strcpy(user_info.name, name);
                         user_info.age = age;
                         strcpy(user_info.phone, phone);
@@ -670,12 +765,10 @@ void *client_handler(void *arg) {
                 {
                     
                     //아이디 추가
-                    printf("log5 아이디 추가로 들어옴\n");
+                    
                     User user_for_add;
                     memset(&user_for_add, 0, sizeof(User));
                     read(client_socket, &user_for_add, sizeof(user_for_add));
-                    printf("log 1 정보를 받았다. \n");
-                    
 
                     // 구조체 끝부분에 넣는다.
                     if((strlen(user_for_add.id)>=0) && (user_for_add.id !=NULL))
@@ -690,9 +783,6 @@ void *client_handler(void *arg) {
 
                     // 클라이언트에 유저 추가 했다는 메시지 보낸다.
                     send(client_socket,&is_added, sizeof(is_added),0);
-                    
-                    
-
 
                 }
             }
@@ -719,6 +809,42 @@ void *client_handler(void *arg) {
             if (strcmp(action, "1") == 0)
             {
                 break;
+            }
+            else if (strcmp(action, "2") == 0)
+            {
+                while(1)
+                {
+                    printf("사서가 오픈관리메뉴를 선택했습니다. \n");
+                
+                    bussiness_month m4[31];
+                    set_calendar(m4, 4);
+                    make_json_file_for_bussiness(m4,4);
+    
+                    // bussiness_month m5[32];
+                    // set_calendar(m5, 5);
+                    // make_json_file_for_bussiness(m5,5);
+    
+                    //구조체 배열 크기만큼 전송 4월은 30개
+    
+                    // Book *p_found = NULL;
+                    // int count = search_books_count(key, val);
+                    // p_found = malloc(sizeof(Book)*count);
+    
+                    int cnt=0;
+                    for(int i=0; i<31;i++)
+                    {   
+                        printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
+                        // cnt++;
+                        write(client_socket, &m4[i], sizeof(bussiness_month));
+    
+                    }
+    
+    
+                    
+                    break;
+
+                }//while(1)문끝
+               
             }
             else if (strcmp(action, "3") == 0) // 모든계정관리
             {
