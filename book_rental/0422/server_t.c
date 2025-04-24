@@ -15,7 +15,7 @@
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
 #define MAX_USERS 500
-#define PORT 6666             // 서버가 열릴 포트 번호
+#define PORT 8888             // 서버가 열릴 포트 번호
 #define SIZE 100
 
 // 도서 구조체 정의
@@ -63,6 +63,159 @@ void set_calendar(bussiness_month *m, int mon);
 void make_json_file_for_bussiness(bussiness_month *m, int mon);
 void set_calendar(bussiness_month *m, int mon);
 void solution(int a, int b, char *c);
+int set_work_day(int month, int day, bussiness_month *m4);
+int is_open_for_business(bussiness_month *m, int mon, int day);
+int set_holiday(int mon, int day,bussiness_month *ms);
+void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon);
+char *read_json_file(const char *filename);
+
+int set_work_day(int month, int day, bussiness_month *m4)
+{
+
+    // int a,b;
+    // printf("업무일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
+    // scanf("%d %d", &a, &b);
+
+    char date_[50];
+    sprintf(date_, "2025-%d-%d",month,day);
+    int result =0;
+    for(int i=0; i< 31; i++)
+    {
+        // printf("%s\n", m4[i].date);
+        if(strcmp(m4[i].date, date_)==0)
+        {
+            // printf("%s %s\n",m4[i].date, date_);
+            m4[i].is_open = 1;
+            printf("%s를 업무일로 설정 완료!\n", m4[i].date);
+            
+            return 1;
+
+        }else{
+            result = 0;
+        }
+    }
+    return result;
+}
+
+void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
+{
+    char *json_string = read_json_file("example_4.json");
+    if(!json_string){
+        printf("jsonfile 읽다가 문제생김");
+    }
+    cJSON * json_array = cJSON_Parse(json_string);
+    
+    if(!json_array ||!cJSON_IsArray(json_array)){
+        printf("JSON 파싱 실패 또는 배열이아님\n");
+        exit(1);
+    }
+
+    int array_size = cJSON_GetArraySize(json_array);
+
+    for(int i=0; i<array_size; i++)
+    {
+        cJSON *day = cJSON_GetArrayItem(json_array,i);
+        if(!cJSON_IsObject(day)) continue;
+
+        /*
+        "date" : "2025-4-1",
+        "day_" : "화",
+        "is_open" : 1
+        */
+        cJSON *d1 = cJSON_GetObjectItemCaseSensitive(day,"date");
+        cJSON *d2 = cJSON_GetObjectItemCaseSensitive(day,"day_");
+        cJSON *d3 = cJSON_GetObjectItemCaseSensitive(day,"is_open");
+        strcpy(m[i].date, d1->valuestring);
+        strcpy(m[i].day_, d2->valuestring);
+        m[i].is_open=d3->valueint;
+
+    }
+
+}
+
+
+char *read_json_file(const char *filename)
+{
+    FILE * file = fopen(filename, "r");
+    if(!file){
+        printf("파일을 열수 없습니다. %s\n", filename);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+
+    char *json_data = (char *)malloc(file_size+1);
+    if(!json_data){
+        printf("메모리 할당 실패\n");
+        fclose(file);
+        return NULL;
+    }
+
+    fread(json_data, 1,file_size, file);
+    json_data[file_size] = '\0';
+
+    fclose(file);
+    return json_data;
+}
+
+int set_holiday(int mon, int day,bussiness_month *m)
+{
+
+ 
+    int result;
+    char date_[50];
+    sprintf(date_, "2025-%d-%d",mon,day);
+    
+    for(int i=0; i< 31; i++)
+    {
+        
+        // printf("%s\n", m4[i].date);
+        if(strcmp(m[i].date, date_)==0)
+        {
+            // printf("%s %s\n",m4[i].date, date_);
+            m[i].is_open = 0;
+            printf("%s를 휴일로 설정 완료!\n", m[i].date);
+            
+            return 1;
+        }
+        else {
+            result =0;
+        }
+    }
+    return result;
+}
+
+
+int is_open_for_business(bussiness_month *m, int mon, int day)
+{
+    
+
+    char date_[50];
+    sprintf(date_, "2025-%d-%d",mon,day);
+
+   
+    for(int i=0; i< 31; i++)
+    {
+        
+        // printf("%s\n", m4[i].date);
+        if(strcmp(m[i].date, date_)==0)
+        {
+            
+            if(m[i].is_open ==1)
+            {
+                return 1;
+            }
+            else{
+                return 0;
+
+            }
+            
+
+        }
+    }
+}
 
 // 도서 목록을 JSON 파일에서 불러오는 함수
 int load_books(const char *filename) {
@@ -217,7 +370,7 @@ void make_json_file_for_bussiness(bussiness_month *m, int mon)
     
     fprintf(fp, "[");
     
-    for(int i=1; i<(DayOfMonth[mon-1]+1);i++) 
+    for(int i=0; i<(DayOfMonth[mon-1]+1);i++) 
     {
         fprintf(fp,"{\n");
         fprintf(fp, "\"date\" : \"%s\",\n",m[i].date);
@@ -505,6 +658,12 @@ void *client_handler(void *arg) {
     int year;
     int messege_a;
 
+    /* 달력정보를 초기화하는 내용 */
+    bussiness_month m4[31];
+    memset(&m4, 0, sizeof(bussiness_month)*31);
+    parsing_json_to_struct_for_bussiness(m4, 4);
+
+
     read(client_socket, cmd, sizeof(cmd));
     read(client_socket, id, sizeof(id));
     read(client_socket, pw, sizeof(pw));
@@ -789,6 +948,120 @@ void *client_handler(void *arg) {
             }
             else if (strcmp(action, "3") == 0) // 도서관오픈관리
             {
+                
+
+                char sub_action[16]="\0";
+
+                //read cmd
+                read(client_socket, cmd, sizeof(cmd));
+                int mon_and_day[2] = {0,};
+
+               
+                
+
+                if(strcmp(cmd,"1")==0) //영업일 설정
+                {
+                    
+                    // read mon_and_day
+                    read(client_socket, mon_and_day, sizeof(mon_and_day));
+                    // printf("log 827     :%d %d\n",mon_and_day[0], mon_and_day[1] );
+                    //영업일 설정 리턴 0 or 1 잘설정되면 1
+                    int set_work_result =0;
+                    
+                    
+                    //1 파싱함
+                    parsing_json_to_struct_for_bussiness(m4, 4);
+
+                    //2. 설정함
+                    set_work_result = set_work_day( mon_and_day[0],  mon_and_day[1], m4);
+                    
+                    //3. 저장함
+                    make_json_file_for_bussiness(m4, 4);
+
+                    
+
+                    
+                    printf("log server 1 send set_work_result : %d\n", set_work_result);
+                    // send set_work_result
+                    send(client_socket, &set_work_result, sizeof(set_work_result),0);
+
+                    // check
+                    if(is_open_for_business(m4,mon_and_day[0],  mon_and_day[1]))
+                    {
+                        printf("%d월 %d일은 영업일 입니다.\n",mon_and_day[0],  mon_and_day[1]);
+                    }else{
+                        printf("%d월 %d일은 영업이 아닙니다.\n",mon_and_day[0],  mon_and_day[1]);
+                    }
+                    
+                }else if(strcmp(cmd,"2")==0)
+                {
+                    //휴업일 설정 리턴 0 or 1   
+                    
+
+                    // read mon_and_day
+                    read(client_socket, mon_and_day, sizeof(mon_and_day));
+                    memset(&m4, 0, sizeof(bussiness_month)*31);
+                    parsing_json_to_struct_for_bussiness(m4, 4);
+
+                    int set_holy_result =0;
+
+
+                    //1 파싱함
+                    parsing_json_to_struct_for_bussiness(m4, 4);
+
+                    //2. 설정함
+                    set_holy_result = set_holiday( mon_and_day[0],  mon_and_day[1], m4);
+                    
+                    //3. 저장함
+                    make_json_file_for_bussiness(m4, 4);
+
+                    send(client_socket, &set_holy_result, sizeof(set_holy_result),0);
+
+                    if(is_open_for_business(m4,mon_and_day[0],  mon_and_day[1]))
+                    {
+                        printf("%d월 %d일은 영업일 입니다.\n",mon_and_day[0],  mon_and_day[1]);
+                        
+                    }else{
+                        printf("%d월 %d일은 영업이 아닙니다.\n",mon_and_day[0],  mon_and_day[1]);
+                        
+
+                    }
+
+                }else if(strcmp(cmd,"3")==0)
+                {
+                    //해당일이 영업일인지 아닌지 체크
+
+                    // read mon_and_day
+                    read(client_socket, mon_and_day, sizeof(mon_and_day));
+
+                    memset(&m4, 0, sizeof(bussiness_month)*31);
+                    parsing_json_to_struct_for_bussiness(m4, 4);
+                    
+                    for(int i=0; i<31; i++)
+                    {
+                        printf("logs 1026 for %s\n", m4[i].date);
+                    }
+
+                    int result;
+                    if(is_open_for_business(m4,mon_and_day[0],  mon_and_day[1]))
+                    {
+                        printf("%d월 %d일은 영업일 입니다.\n",mon_and_day[0],  mon_and_day[1]);
+                        result = 1;
+                        
+                    }else{
+                        printf("%d월 %d일은 영업이 아닙니다.\n",mon_and_day[0],  mon_and_day[1]);
+                        result = 0;
+
+                    }
+                    printf("logs 1040 : %d\n",result);
+
+                    send(client_socket, &result, sizeof(result),0);
+
+
+                }
+
+
+
                 break;
             }
             else if (strcmp(action, "4") == 0) // 대출자정보
@@ -820,7 +1093,7 @@ void *client_handler(void *arg) {
                 
                     bussiness_month m4[31];
                     set_calendar(m4, 4);
-                    make_json_file_for_bussiness(m4,4);
+                    make_json_file_for_bussiness(m4,4); //이 명령을 하면 json파일이 리셋됨
     
                     time_t timer = time(NULL);
                     struct tm* t = localtime(&timer);
@@ -852,15 +1125,7 @@ void *client_handler(void *arg) {
                     printf("금일은  %s \n",holiday);
 
                     send(client_socket,holiday,sizeof(holiday),0);
-                    
-
-
                     break;
-
-    
-    
-               
-
                 }//while(1)문끝
                
             }

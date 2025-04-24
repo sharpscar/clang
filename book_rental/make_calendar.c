@@ -104,50 +104,43 @@ int main()
     // set_work_day(m4);
     // is_open_for_business(m4);  // 영업일인지 확인하는 함수
 
-    time_t timer = time(NULL);
-
-    struct tm* t = localtime(&timer);
-
     
-    printf("현재 월: %d\n", t->tm_mon+1);
-    printf("현재 일: %d일 입니다.\n", t->tm_mday);
-    printf("현재 시 : %d시 입니다.\n", t->tm_hour);
 
     return 0;
 }
-// void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
-// {
-//     char *json_string = read_json_file("example_4.json");
-//     if(!json_string){
-//         printf("jsonfile 읽다가 문제생김");
-//     }
-//     cJSON * json_array = cJSON_Parse(json_string);
+void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
+{
+    char *json_string = read_json_file("example_4.json");
+    if(!json_string){
+        printf("jsonfile 읽다가 문제생김");
+    }
+    cJSON * json_array = cJSON_Parse(json_string);
     
-//     if(!json_array ||!cJSON_IsArray(json_array)){
-//         printf("JSON 파싱 실패 또는 배열이아님\n");
-//         exit(1);
-//     }
+    if(!json_array ||!cJSON_IsArray(json_array)){
+        printf("JSON 파싱 실패 또는 배열이아님\n");
+        exit(1);
+    }
 
-//     int array_size = cJSON_GetArraySize(json_array);
+    int array_size = cJSON_GetArraySize(json_array);
 
-//     for(int i=0; i<array_size; i++)
-//     {
-//         cJSON *day = cJSON_GetArrayItem(json_array,i);
-//         if(!cJSON_IsObject(day)) continue;
+    for(int i=0; i<array_size; i++)
+    {
+        cJSON *day = cJSON_GetArrayItem(json_array,i);
+        if(!cJSON_IsObject(day)) continue;
 
-//         /*
-//         "date" : "2025-4-1",
-//         "day_" : "화",
-//         "is_open" : 1
-//         */
-//         cJSON *d1 = cJSON_GetObjectItemCaseSensitive(day,"date");
-//         cJSON *d2 = cJSON_GetObjectItemCaseSensitive(day,"day_");
-//         cJSON *d3 = cJSON_GetObjectItemCaseSensitive(day,"is_open");
-//         strcpy(m[i].date, d1->valuestring);
-//         strcpy(m[i].day_, d2->valuestring);
-//         m[i].is_open=d3->valueint;
+        /*
+        "date" : "2025-4-1",
+        "day_" : "화",
+        "is_open" : 1
+        */
+        cJSON *d1 = cJSON_GetObjectItemCaseSensitive(day,"date");
+        cJSON *d2 = cJSON_GetObjectItemCaseSensitive(day,"day_");
+        cJSON *d3 = cJSON_GetObjectItemCaseSensitive(day,"is_open");
+        strcpy(m[i].date, d1->valuestring);
+        strcpy(m[i].day_, d2->valuestring);
+        m[i].is_open=d3->valueint;
 
-//     }
+    }
 
 
 
@@ -233,33 +226,31 @@ int is_open_now(bussiness_month *m)
    
 }
 
-void is_open_for_business(bussiness_month *m4)
+int is_open_for_business(bussiness_month *m, int mon, int day)
 {
-    int a,b;
-    printf("영업일인지 알아볼 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
-    scanf("%d %d", &a, &b);
+    
 
     char date_[50];
-    sprintf(date_, "2025-%d-%d",a,b);
+    sprintf(date_, "2025-%d-%d",mon,day);
 
-    if(a != 4)
+    if(mon != 4)
     {
-        printf("4월만 가능합니다 5월은 아직 기능이 완료되지 않았습니다.");
+        printf("현재는 4월만 가능합니다 5월은 아직 기능이 완료되지 않았습니다.");
     }
 
     for(int i=0; i< 31; i++)
     {
         
         // printf("%s\n", m4[i].date);
-        if(strcmp(m4[i].date, date_)==0)
+        if(strcmp(m[i].date, date_)==0)
         {
             
-            if(m4[i].is_open ==1)
+            if(m[i].is_open ==1)
             {
-                printf("%s 일은 영업일입니다.", m4[i].date);
+                return 1;
             }
             else{
-                printf("%s 일은 휴일입니다.", m4[i].date);
+                return 0;
 
             }
             
@@ -268,16 +259,13 @@ void is_open_for_business(bussiness_month *m4)
     }
 }
 
-void set_holyday(bussiness_month *m4)
+void set_holyday(bussiness_month *m4, int mon, int day)
 {
 
-    int a,b;
-    int tmp=0;
-    printf("휴일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
-    scanf("%d %d", &a, &b);
-
+ 
+    int result;
     char date_[50];
-    sprintf(date_, "2025-%d-%d",a,b);
+    sprintf(date_, "2025-%d-%d",mon,day);
     
     for(int i=0; i< 31; i++)
     {
@@ -289,21 +277,24 @@ void set_holyday(bussiness_month *m4)
             m4[i].is_open = 0;
             printf("%s를 휴일로 설정 완료!\n", m4[i].date);
             
-
+            return 1;
+        }
+        else {
+            result =0;
         }
     }
-    
+    return result;
 }
 
-void set_work_day(bussiness_month *m4)
+void set_work_day(int month, int day, bussiness_month *m4)
 {
 
-    int a,b;
-    printf("업무일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
-    scanf("%d %d", &a, &b);
+    // int a,b;
+    // printf("업무일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24       \n");
+    // scanf("%d %d", &a, &b);
 
     char date_[50];
-    sprintf(date_, "2025-%d-%d",a,b);
+    sprintf(date_, "2025-%d-%d",month,day);
     
     for(int i=0; i< 31; i++)
     {

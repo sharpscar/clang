@@ -8,7 +8,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 6666   // 서버 포트
+#define PORT 8888   // 서버 포트
 #define MAX_LOANS 100  // 대출 가능한 최대 도서 수
 #define MAX_USERS 500
 
@@ -538,7 +538,82 @@ int main() {
                     //모든계정관리 끝  
                     if (strcmp(cmd, "3") == 0) // 도서관오픈관리
                     {
-                       
+
+                        printf("도서관 오픈관리 \n");
+
+                        printf("1.영업일 설정, 2.휴업일로 설정, 3.영업일확인 ");
+                        fgets(cmd, sizeof(cmd), stdin);
+                        cmd[strcspn(cmd, "\n")] = 0;
+                        char sub_action[16]="\0";
+                        int mon_and_day[2]={0,};
+                        int set_result;
+                        //send cmd
+                        send(sock, cmd, sizeof(cmd),0);
+
+                        if(strcmp(cmd, "1")==0) //영업일 설정
+                        {
+                            
+                            set_result=0;
+                            printf("업무일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24\n");
+                            scanf("%d %d", &mon_and_day[0], &mon_and_day[1]);
+                            
+                            
+                            // send mon_and_day
+                            send(sock, mon_and_day, sizeof(mon_and_day)*2, 0);
+                            
+                            // read set_result
+                            read(sock,&set_result,sizeof(set_result));
+                            printf("log read set_result %d\n",set_result);
+                            
+                            printf("log 565  %d\n", set_result);
+
+                            if(set_result)
+                            {
+                                printf("설정이 완료되었습니다.\n");
+                            }
+
+                            
+                        }else if(strcmp(cmd, "2")==0) //휴업일 설정
+                        {
+                           set_result=0;
+                           printf("휴업일로 설정할 날짜정보를 입력하세요 예 4월 24일: 4 24\n");
+                           scanf("%d %d", &mon_and_day[0], &mon_and_day[1]);
+
+
+                            // send mon_and_day
+                            send(sock, mon_and_day, sizeof(mon_and_day)*2, 0);
+
+
+                            //read result
+                            read(sock,&set_result, sizeof(set_result) );
+                            if(set_result)
+                            {
+                                printf("설정이 완료되었습니다.\n");
+                            }
+
+                        }else if(strcmp(cmd, "3")==0) //영업일 확인
+                        {
+                            set_result=0;
+                            printf("알아보실 날짜정보를 입력하세요 예 4월 24일: 4 24\n");
+                            
+                            scanf("%d %d", &mon_and_day[0], &mon_and_day[1]);
+                            
+                            printf("%d %d\n ",mon_and_day[0],mon_and_day[1]);
+
+                            send(sock, mon_and_day, sizeof(mon_and_day)*2, 0);
+
+                            //read result
+                            read(sock,&set_result, sizeof(set_result) );
+                            if(set_result)
+                            {
+                                printf(" %d월 %d일은 영업일입니다..\n",mon_and_day[0],mon_and_day[1]);
+                            }else{
+                                printf(" %d월 %d일은 영업일이 아닙니다.\n",mon_and_day[0],mon_and_day[1]);
+
+                            }
+                            sleep(1);
+                        }
+
                     }
                     if (strcmp(cmd, "4") == 0) // 대출자정보
                     {
