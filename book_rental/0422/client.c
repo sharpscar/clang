@@ -688,7 +688,7 @@ int main() {
 
                             if(strstr(m4[i].date,day))
                             {
-                                
+                                printf("인덱스는? %d %s일 쉬는지?%d \n", i, m4[i].date,  m4[i].is_open);
                                 if(m4[i].is_open)
                                 {
                                     strcpy(holiday, "영업일 입니다.");
@@ -727,6 +727,9 @@ int main() {
                     m4=NULL;
                     free(m4);
                     m4=NULL;
+                      
+                                        
+                    break;
                 }
                 else if (strcmp(cmd, "3") == 0) // 모든계정관리
                 {

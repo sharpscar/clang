@@ -8,6 +8,7 @@
 #include "cJSON.h"   // JSON 처리 라이브러리 헤더
 #include "cJSON.c"
 #include <errno.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -812,6 +813,7 @@ void *client_handler(void *arg) {
             }
             else if (strcmp(action, "2") == 0)
             {
+                
                 while(1)
                 {
                     printf("사서가 오픈관리메뉴를 선택했습니다. \n");
@@ -820,28 +822,22 @@ void *client_handler(void *arg) {
                     set_calendar(m4, 4);
                     make_json_file_for_bussiness(m4,4);
     
-                    // bussiness_month m5[32];
-                    // set_calendar(m5, 5);
-                    // make_json_file_for_bussiness(m5,5);
-    
-                    //구조체 배열 크기만큼 전송 4월은 30개
-    
-                    // Book *p_found = NULL;
-                    // int count = search_books_count(key, val);
-                    // p_found = malloc(sizeof(Book)*count);
-    
-                    int cnt=0;
+                    
                     for(int i=0; i<31;i++)
                     {   
-                        printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
+                        // printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
                         // cnt++;
                         write(client_socket, &m4[i], sizeof(bussiness_month));
     
                     }
-    
-    
+
+
                     
                     break;
+
+    
+    
+               
 
                 }//while(1)문끝
                
