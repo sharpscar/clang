@@ -48,14 +48,8 @@ typedef struct {
     int msc;
 }User;
 //유저 아이디 이름 나이 핸드폰번호 주소 
-typedef struct {
 
-    char date[100];
-    char day_[50];
-    int is_open;  // 1이면 영업 0이면 휴일
-}bussiness_month;
 
-void solution(int a, int b, char *c) ;
 void clear_newline(char *str) {
     str[strcspn(str, "\n")] = 0; // Remove the newline character
 }
@@ -65,76 +59,6 @@ void clear_newline(char *str) {
 //         phone[i] = "*";             
 //     }
 // }
-
-int is_open_now(bussiness_month *m);
-char *  get_current_time();
-int is_open_now(bussiness_month *m)
-{
-    int flag=0;
-
-    time_t t= time(NULL);
-    struct tm tm_ = *localtime(&t);
-    char str_t[100];
-    char *current;
-    char yoil[10];
-
-    solution(tm_.tm_mon+1, tm_.tm_mday, yoil);
-    
-    sprintf(str_t,"%d-%d-%d", 
-                tm_.tm_year+1900,
-                tm_.tm_mon+1,
-                tm_.tm_mday                
-            );
-    
-
-        
-    //해당 날짜가 영업일인가? 맞으면 flag =1
-    for(int i=0; i<31;i++)
-    {
-        
-        if(strcmp(m[i].date, str_t)==0)
-        {
-            if(m[i].is_open ==1)
-            {
-                flag = 1;
-        
-            }else{
-                flag = 0;
-        
-            }
-        }
-    }
-    // 현재 시간이 8~18시 사이인가? 맞으면 1 틀리면 0
-    if ( (tm_.tm_hour > 8) &&(tm_.tm_hour < 18))
-    {
-        flag = 1;
-    }else{
-        flag = 0;
-    }   
-    // printf("%d",flag);
-    return flag;
-   
-}
-
-
-
-
-
-/** 4월달 요일을 뱉는 함수 */
-void solution(int a, int b, char *c) {
-    char *DayOfTheWeek[] = {"일","월","화","수","목", "금","토"};
-    int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
-    int Total = 0;
-    // printf("%d\n", a);
-   char the_day[10];
-   while(a>0){
-    Total +=DayOfMonth[--a];
-   }   
-   Total += b;
-   
-   strcpy(c,DayOfTheWeek[Total%7] );
-
-}
 
 int main() {
     int sock;
@@ -640,13 +564,8 @@ int main() {
                 }
                 else if (strcmp(cmd, "2") == 0) // 대출정보
                 {
-                    bussiness_month *m4 = NULL;
-                    m4 = malloc(sizeof(bussiness_month)*31);
-                    int m4_freeflag =1;
+                    
                     while(1){
-                        //특정조건에 오늘이 운영날짜가 아니면 break;
-                        //m4 구조체(달력)을 서버에서 던져주면
-                        // 클라에서 받아서 확인해서 오늘이 운영하는날이 아니면 텍스트 출력
                         
                         //오픈관리 시작
                         char action[16];
@@ -666,69 +585,16 @@ int main() {
                         char time_str[250];
                         sprintf(time_str, "%d월 %d일 %d시 입니다.\n",t->tm_mon+1, t->tm_mday, t->tm_hour);
                         printf("금일 날짜는 %s\n",time_str);
-
-                        int day_of_4month=32; //1부터 31까지 30개
                         
-                        // 달력 정보를 수신
-                        for (int i = 1; i < day_of_4month; i++)
-                        {
-                            read(sock, &m4[i], sizeof(bussiness_month));
-                        }
+                        char result_holiday[50];
+                        read(sock,result_holiday, sizeof(result_holiday));
 
-                        //오늘 날짜를 문자열로 바꿈
-                        char day[10];
-                        sprintf(day, "%d", t->tm_mday);
-                        char holiday[50];
+                        printf("금일은  %s \n",result_holiday);
 
-                        for(int i = 1;i<day_of_4month;i++){
-                            // printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
-                            
-                            // printf("%s\n", m4[i].date);
-                            // printf("%d\n", t->tm_m);
-
-                            if(strstr(m4[i].date,day))
-                            {
-                                printf("인덱스는? %d %s일 쉬는지?%d \n", i, m4[i].date,  m4[i].is_open);
-                                if(m4[i].is_open)
-                                {
-                                    strcpy(holiday, "영업일 입니다.");
-                                }else
-                                {   
-                                    strcpy(holiday, "휴일 입니다.");
-                                }
-                            }
-                            
-                        }
-
-                        printf("금일은  %s \n",holiday);
-
-                        //버퍼비우기
-                        // while(getchar() !='\n');
-                        // getchar();
-
-                        
-                        
-                        //오늘 날짜와 시간을 가져옵시다
-
-                        // //4월 운영일을 찾습니다. 
-                        // int is_open;
-                        // is_open = is_open_now(m4);
-                        // if(is_open)
-                        // {
-                        //     printf("운영중입니다.");
-                        // }
-                        // else{
-                        //     printf("운영중이 아닙니다.");
-                        // }
+                       
 
                         break;
                     }
-
-                    m4=NULL;
-                    free(m4);
-                    m4=NULL;
-                      
-                                        
                     break;
                 }
                 else if (strcmp(cmd, "3") == 0) // 모든계정관리

@@ -822,17 +822,39 @@ void *client_handler(void *arg) {
                     set_calendar(m4, 4);
                     make_json_file_for_bussiness(m4,4);
     
+                    time_t timer = time(NULL);
+                    struct tm* t = localtime(&timer);
+
+                     //오늘 날짜를 문자열로 바꿈
+                     char day[10];
+                     sprintf(day, "%d", t->tm_mday);
+                     char holiday[50];
+
+                    for(int i=1;i<31;i++){
+                    // printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
                     
-                    for(int i=0; i<31;i++)
-                    {   
-                        // printf("log 1:  날짜%s %s요일 %d\n", m4[i].date, m4[i].day_,m4[i].is_open);
-                        // cnt++;
-                        write(client_socket, &m4[i], sizeof(bussiness_month));
-    
+                    // printf("%s\n", m4[i].date);
+                    // printf("%d\n", t->tm_m);
+
+                        if(strstr(m4[i].date,day))
+                        {
+                            printf("인덱스는? %d %s일 쉬는지?%d \n", i, m4[i].date,  m4[i].is_open);
+                            if(m4[i].is_open)
+                            {
+                                strcpy(holiday, "영업일 입니다.");
+                            }else
+                            {   
+                                strcpy(holiday, "휴일 입니다.");
+                            }
+                        }
+                    
                     }
+                    printf("금일은  %s \n",holiday);
 
-
+                    send(client_socket,holiday,sizeof(holiday),0);
                     
+
+
                     break;
 
     
