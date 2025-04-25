@@ -269,7 +269,7 @@ void general_client(int sock, char *id, int *plag_exit) {
             read(sock, user_info.addr, sizeof(user_info.addr));
             
 
-            printf("id :%s\n",user_info.id);
+            printf("id :%s\n",id);
             printf("유저명 :%s\n",user_info.name);
             printf("나이 :%d\n",user_info.age);
             printf("전화번호 :%s\n",user_info.phone);
