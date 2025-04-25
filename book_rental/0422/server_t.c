@@ -15,7 +15,7 @@
 
 #define MAX_BOOKS 11000           // 도서 최대 등록 수
 #define MAX_USERS 500
-#define PORT 8888             // 서버가 열릴 포트 번호
+#define PORT 2222             // 서버가 열릴 포트 번호
 #define SIZE 100
 
 // 도서 구조체 정의
@@ -79,8 +79,9 @@ int set_work_day(int month, int day, bussiness_month *m4)
     char date_[50];
     sprintf(date_, "2025-%d-%d",month,day);
     int result =0;
-    for(int i=0; i< 31; i++)
+    for(int i=0; i< 30; i++)
     {
+        
         // printf("%s\n", m4[i].date);
         if(strcmp(m4[i].date, date_)==0)
         {
@@ -93,6 +94,9 @@ int set_work_day(int month, int day, bussiness_month *m4)
         }else{
             result = 0;
         }
+
+       
+        
     }
     return result;
 }
@@ -110,10 +114,12 @@ void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
         exit(1);
     }
 
-    int array_size = cJSON_GetArraySize(json_array);
+    // int array_size = cJSON_GetArraySize(json_array);
 
-    for(int i=0; i<array_size; i++)
+    for(int i=0; i<31; i++)
     {
+        
+
         cJSON *day = cJSON_GetArrayItem(json_array,i);
         if(!cJSON_IsObject(day)) continue;
 
@@ -128,6 +134,10 @@ void parsing_json_to_struct_for_bussiness(bussiness_month *m, int mon)
         strcpy(m[i].date, d1->valuestring);
         strcpy(m[i].day_, d2->valuestring);
         m[i].is_open=d3->valueint;
+
+        printf("함수 parsing_json_to_struct_for_bussiness %s\n", m[i].date);
+    
+        
 
     }
 
@@ -168,21 +178,26 @@ int set_holiday(int mon, int day,bussiness_month *m)
     char date_[50];
     sprintf(date_, "2025-%d-%d",mon,day);
     
-    for(int i=0; i< 31; i++)
+    for(int i=1; i< 31; i++)
     {
-        
-        // printf("%s\n", m4[i].date);
-        if(strcmp(m[i].date, date_)==0)
+        if(i!=0)
         {
-            // printf("%s %s\n",m4[i].date, date_);
-            m[i].is_open = 0;
-            printf("%s를 휴일로 설정 완료!\n", m[i].date);
-            
-            return 1;
+            // printf("%s\n", m4[i].date);
+            if(strcmp(m[i].date, date_)==0)
+            {
+                // printf("%s %s\n",m4[i].date, date_);
+                m[i].is_open = 0;
+                printf("%s를 휴일로 설정 완료!\n", m[i].date);
+                
+                return 1;
+            }
+            else {
+                result =0;
+            }
+
         }
-        else {
-            result =0;
-        }
+        
+        
     }
     return result;
 }
@@ -370,19 +385,26 @@ void make_json_file_for_bussiness(bussiness_month *m, int mon)
     
     fprintf(fp, "[");
     
-    for(int i=0; i<(DayOfMonth[mon-1]+1);i++) 
+    for(int i=0; i<(DayOfMonth[mon-1]);i++) 
     {
+        
         fprintf(fp,"{\n");
         fprintf(fp, "\"date\" : \"%s\",\n",m[i].date);
         fprintf(fp, "\"day_\" : \"%s\",\n",m[i].day_);
         fprintf(fp, "\"is_open\" : %d\n",m[i].is_open);
-        if (i<DayOfMonth[mon-1]) //5월일땐 31로 변경해야함
+
+        printf("loooog  make_json_file      %d\n",i);
+        if (i<29) //5월일땐 30으로 변경해야함
         {
             /* code */
             fprintf(fp, "},\n");
         }else{
             fprintf(fp, "}\n");
-        }                
+        }      
+        
+        
+         
+                     
     }
 
     fprintf(fp, "]\n"); //전체닫기
@@ -401,24 +423,32 @@ void set_calendar(bussiness_month *m, int mon)
     char day_[10];
     int DayOfMonth[12] =  {31,28,31,30,31,30,31,31,30,31,30,31};
 
-    for(int i=1; i<DayOfMonth[mon-1]+2; i++)
+    for(int i=0; i<DayOfMonth[mon-1]+1; i++)
     {
-        sprintf(date_ ,"2025-%d-%d",mon,i);
-        // printf("%s  ",date_);
-        strcpy(m[i].date, date_);
-        solution(mon,i, day_);  //날짜를 넣어서 
-        // printf("%s\n", day_);        
-        strcpy(m[i].day_,day_);        
-
-
-        if((strcmp(m[i].day_,"토")==0)||(strcmp(m[i].day_,"일")==0))
+        if(i!=0)
         {
-            m[i].is_open = 0;
-            // printf("휴일입니다.\n");
-        }else{
-            m[i].is_open = 1;
-            // printf("영업일입니다.\n");
+            sprintf(date_ ,"2025-%d-%d",mon,i);
+            // printf("%s  ",date_);
+            strcpy(m[i].date, date_);
+            solution(mon,i, day_);  //날짜를 넣어서 
+            // printf("%s\n", day_);        
+            strcpy(m[i].day_,day_);        
+
+
+            /**set_calendar 함수에서의 내용 */
+            printf("set_calendar    >%s\n",date_);
+
+            if((strcmp(m[i].day_,"토")==0)||(strcmp(m[i].day_,"일")==0))
+            {
+                m[i].is_open = 0;
+                // printf("휴일입니다.\n");
+            }else{
+                m[i].is_open = 1;
+                // printf("영업일입니다.\n");
+            }
+
         }
+        
     }
     // for(int i=1; i<31; i++)
     // {

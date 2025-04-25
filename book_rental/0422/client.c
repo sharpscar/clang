@@ -8,7 +8,7 @@
 #pragma pack(1)
 #define SIZE 100
 #define MAX_BOOKS 11000
-#define PORT 8888   // 서버 포트
+#define PORT 2222   // 서버 포트
 #define MAX_LOANS 100  // 대출 가능한 최대 도서 수
 #define MAX_USERS 500
 
