@@ -1,1 +1,0 @@
-gcc 파일명.c -o server -lcjson -pthread

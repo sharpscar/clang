@@ -598,7 +598,7 @@ int load_loans(const char *filename) {
         strcpy(loans[count_1].isbn, cJSON_GetObjectItem(loan, "ISBN")->valuestring);
         loans[count_1].loan_time = cJSON_GetObjectItem(loan, "대출 시간")->valueint;
         strcpy(loans[count_1].status, cJSON_GetObjectItem(loan, "상태")->valuestring);
-        strcpy(loans[count_1].loan_addr, cJSON_GetObjectItem(loan, "배송지")->valuestring);
+        strcpy(loans[count_1].loan_addr, cJSON_GetObjectItem(loan, "주소")->valuestring);
         count_1++;                                                                // 도서 수 증가
     }
     cJSON_Delete(root_1);            // JSON 객체 해제
@@ -621,7 +621,7 @@ int save_loans(const char *filename) {
         cJSON_AddStringToObject(a, "ISBN", loans[i].isbn);
         cJSON_AddNumberToObject(a, "대출 시간", loans[i].loan_time);
         cJSON_AddStringToObject(a, "상태", loans[i].status);
-        cJSON_AddStringToObject(a, "배송지", loans[i].loan_addr);
+        cJSON_AddStringToObject(a, "주소", loans[i].loan_addr);
         cJSON_AddItemToArray(root_1, a);                                    // 배열에 추가
     }
     char *out = cJSON_Print(root_1);                // JSON 문자열로 변환
@@ -848,8 +848,6 @@ void *client_handler(void *arg) {
     memset(&m4, 0, sizeof(bussiness_month)*31);
     parsing_json_to_struct_for_bussiness(m4, 4);
 
-
-
     read(client_socket, cmd, sizeof(cmd));
     read(client_socket, id, sizeof(id));
     read(client_socket, pw, sizeof(pw));
@@ -879,6 +877,8 @@ void *client_handler(void *arg) {
         printf("[%s]: logged in\n", id);
         while (1) {
             char id_[50] = {0};
+
+            //read 1: char id
             read(client_socket, id, sizeof(id));
             strcpy(id_, id);
             
@@ -898,6 +898,7 @@ void *client_handler(void *arg) {
             
             printf("%s\n", id_);
 
+            //send 2(write 2): user_info (id, name, age, phone, addr )
             cJSON_ArrayForEach(user, root) {
                 char *uid = cJSON_GetObjectItem(user, "id")->valuestring;
                 if(strcmp(uid,id_ )==0)
@@ -919,105 +920,49 @@ void *client_handler(void *arg) {
                     write(client_socket, &user_info.age, sizeof(user_info.age));
                     write(client_socket, user_info.phone, sizeof(user_info.phone));
                     write(client_socket, user_info.addr, sizeof(user_info.addr));
-                    // printf("%s\n",user_info.name);
-                    // printf("%d\n",user_info.age);
-                    // printf("%s\n",user_info.phone);
-                    // printf("%s\n",user_info.addr);
+ 
                 }
                 else{
-                    printf("유저가 없거나 가져올수 없습니다.\n");
+                    // printf("유저가 없거나 가져올수 없습니다.\n");
                 }
             }
-            // for(int i = 0;i<loan_count;i++)
-            // {
-            //     printf("%s\n %s\n %s\n %s\n %d\n %d\n %s\n %d\n %s\n"
-            //         , loans[i].id, loans[i].title, loans[i].author, loans[i].publisher, loans[i].pub_year, loans[i].num_books, loans[i].isbn, loans[i].loan_time, loans[i].status);
-            // }
+
             int d_count = search_user_loans_count(id);
-            // printf("%d\n", d_count);
+            printf("%d\n", d_count);
             Book2 *d_found = malloc(sizeof(Book2)*d_count);
             memset(d_found, 0, sizeof(Book2)*d_count);
+
+            //send 3 ( write 3 ) : d_count ( d_count )
             write(client_socket, &d_count, sizeof(int));         //1.멀록카운트
-            if(d_count>0)
-            {
+
+            if(d_count>0) {
                 search_user_loans(id, d_found);
-                for (int i = 0; i < d_count; i++)
-                {
+                for (int i = 0; i < d_count; i++) {
                     write(client_socket, &d_found[i], sizeof(Book2)); //2.대출목록
                 }
             }
-            // for(int i = 0;i<loan_count;i++)
-            // {
-            //     printf("%s\n %s\n %s\n %s\n %d\n %d\n %s\n %ld\n %s\n"
-            //         , d_found[i].id, d_found[i].title, d_found[i].author, d_found[i].publisher, d_found[i].pub_year, d_found[i].num_books, d_found[i].isbn, d_found[i].loan_time, d_found[i].status);
-            // }
-            char action[16] = {0};
+
+            char action[16] = {0}; 
+
+            //read 2 : char action ( cmd )
             read(client_socket, action, sizeof(action));  // 3.사용자 요청
-            if (strcmp(action, "1") == 0)
-            {
-                char id_[50];
-                read(client_socket, id, sizeof(id));
-                strcpy(id_, id);
-                
-                FILE *fp = fopen("users.json", "r");
-                if (!fp) return 0;
-                fseek(fp, 0, SEEK_END);
-                long len = ftell(fp);
-                rewind(fp);
 
-                char *data = malloc(len + 1);
-                fread(data, 1, len, fp);
-                data[len] = '\0';
-                fclose(fp);
+            if (strcmp(action, "1") == 0) {
+                int go=0;
 
-                cJSON *root = cJSON_Parse(data);
-                cJSON *user;                 
-                
-                printf("%s\n", id_);
-
-                cJSON_ArrayForEach(user, root) {
-                    char *uid = cJSON_GetObjectItem(user, "id")->valuestring;
-                    if(strcmp(uid,id_ )==0)
-                    {
-                        
-                        char *name = cJSON_GetObjectItem(user, "name")->valuestring;
-                        int age = cJSON_GetObjectItem(user, "age")->valueint;
-                        char *phone = cJSON_GetObjectItem(user, "phone")->valuestring;
-                        char *addr = cJSON_GetObjectItem(user, "addr")->valuestring;
-                        User user_info;
-                        
-
-                        strcpy(user_info.name, name);
-                        user_info.age = age;
-                        strcpy(user_info.phone, phone);
-                        strcpy(user_info.addr , addr);
-                        
-
-                        write(client_socket, user_info.id, sizeof(user_info.id));
-                        write(client_socket, user_info.name, sizeof(user_info.name));
-                        write(client_socket, &user_info.age, sizeof(user_info.age));
-                        write(client_socket, user_info.phone, sizeof(user_info.phone));
-                        write(client_socket, user_info.addr, sizeof(user_info.addr));
-
-                        printf("%s\n",user_info.name);
-                        printf("%d\n",user_info.age);
-                        printf("%s\n",user_info.phone);
-                        printf("%s\n",user_info.addr);
-
-                    }
-                    else{
-                        printf("유저가 없거나 가져올수 없습니다.\n");
-                    }
-                 }
-
-                 send(client_socket,&book_2_count,sizeof(int),0);
-            
-                    for (int i = 0; i < book_2_count; i++)
-                    {
-                        write(client_socket, &book_2s[i], sizeof(Book2));
-                    }
+                // //send 1 : int book_2_count
+                // send(client_socket,&book_2_count,sizeof(int),0);
+        
+                // if(d_count>0) {
+                //     for (int i = 0; i < book_2_count; i++) {
+                //         write(client_socket, &book_2s[i], sizeof(Book2));
+                //     }
+                // }
+                read(client_socket, &go, sizeof(go));
+                free(d_found);
+                continue;
             }
-            if (strcmp(action, "2") == 0) // 도서검색하기
+            else if (strcmp(action, "2") == 0)          // 도서검색하기
             {
                 while(1)
                 {
@@ -1208,7 +1153,7 @@ void *client_handler(void *arg) {
                     }
                 }
             }
-            else if (strcmp(action, "3") == 0)                 // 메세지
+            else if (strcmp(action, "3") == 0)          // 메세지
             {
                 // printf("message\n");
                 client_message(client_socket);
@@ -1853,14 +1798,15 @@ void *client_handler(void *arg) {
             }
             else if (strcmp(action,"2") == 0)
             {
-                send(client_socket,&book_2_count,sizeof(int),0);
-            
-                for (int i = 0; i < book_2_count; i++)
-                {
-                    write(client_socket, &book_2s[i], sizeof(Book2));
-                }
                 while(1)
                 {
+                    // //send 1 : book_2_count
+                    // send(client_socket,&book_2_count,sizeof(int),0);
+                
+                    // //send 2 : book_2s[i]
+                    // for (int i = 0; i < book_2_count; i++) {
+                    //     write(client_socket, &book_2s[i], sizeof(Book2));
+                    // }
                     time_t rawtime;
                     struct tm * timeinfo;
 
@@ -1879,11 +1825,17 @@ void *client_handler(void *arg) {
                         printf("마감 시간입니다.\n");
                         break;
                     }
+
                     char loan_id[50] = {0};
                     int num_1 = 0;  //오류 분석용
                     int d_num = 0;  //대출 목록 번호
+                    load_book_2("DATA2.json");
+                    load_loans("DATA2.json");
+
+                    //send 1 : loan_count
                     write(client_socket,&loan_count,sizeof(int));
                         
+                    //send 2 : loans
                     for(int i=0;i<loan_count;i++)
                     {
                         if(strcmp(loans[i].status, "온라인승인대기")==0)         //대기먼저 구조체에 채움
@@ -1891,29 +1843,28 @@ void *client_handler(void *arg) {
                         else
                             write(client_socket,&loans[i],sizeof(Book2));
                     }
+
+                    //read 3 : action ( cmd )
                     read(client_socket, action, sizeof(action));
 
-                    if(strcmp(action, "1")==0)
+                    if(strcmp(action, "1")==0)          //대출승인
                     {
+                        //read 1 : action ( cmd )
                         read(client_socket, action, sizeof(action));
+
                         if(strcmp(action, "1") == 0)             //온라인 대출승인
                         {
-                        //     read(client_socket, &num_1, sizeof(int));
-                        //     read(client_socket, &action, sizeof(int));
-                        //     if (num_1== 0 || d_num >loan_count || d_num < 0)
-                        //     {
-                        //         continue;
-                        //     }
+                            //read 2 : loan_id
                             read(client_socket, loan_id, sizeof(loan_id));   //승인할 아이디 받음
                             int tmp_num=0;
-                            int d_msg=0;    //오류 메시지 확인용 0이면 실패 1이면 성공
-                            for(int i = 0;i<loan_count;i++)  //대출목록에서 아이디와 온라인승인대기인걸 검색
-                            {
+                            int d_msg=0;                        //오류 메시지 확인용 0이면 실패 1이면 성공
+                            
+                            for(int i = 0;i<loan_count;i++) {   //대출목록에서 아이디와 온라인승인대기인걸 검색
                                 if((strcmp(loan_id, loans[i].id)==0) && (strcmp(loans[i].status,"온라인승인대기")==0))
                                     ++tmp_num;
                             }
-                            if (tmp_num>2)
-                            {
+                            
+                            if (tmp_num>2) {
                                 for(int i = 0;i<loan_count;i++)   //3이상이면 온라인 승인 대기를 대출중으로 바꿈
                                 {
                                     if((strcmp(loan_id, loans[i].id)==0) && (strcmp(loans[i].status,"온라인승인대기")==0))
@@ -1930,6 +1881,8 @@ void *client_handler(void *arg) {
                             }
                             else
                                 d_msg = 0;
+
+                            //send 3 : d_msg
                             write(client_socket,&d_msg, sizeof(int));
                             break;
 
@@ -2073,27 +2026,28 @@ void *client_handler(void *arg) {
                             }
                         }
                     }
-                    else if(strcmp(action, "2") == 0) //도서반납
+                    else if(strcmp(action, "2") == 0)   //대출정보
                     {
-                        send(client_socket,&book_2_count,sizeof(int),0);
-                
-                        for (int i = 0; i < book_2_count; i++)
-                        {
-                            write(client_socket, &book_2s[i], sizeof(Book2));
-                        }
                         while(1)
                         {
+                            //send 1
+                            send(client_socket,&book_2_count,sizeof(int),0);
+                    
+                            //send 2
+                            for (int i = 0; i < book_2_count; i++) {
+                                write(client_socket, &book_2s[i], sizeof(Book2));
+                            }
+                                
                             int received_choice = 0;
                             int recv_len = recv(client_socket, &received_choice, sizeof(int), 0);
                             if (recv_len <= 0) {
                                 perror("recv 실패");
                                 close(client_socket);
                             }
-                            if(received_choice == 1)
-                            {
+                            if (received_choice == 1){
 
                             }
-                            if (received_choice == 2)
+                            if (received_choice == 2)   //도서반납
                             {
                                 Book bannam;
                                 char isbn[50];
@@ -2165,6 +2119,9 @@ void *client_handler(void *arg) {
                                 if (!found) {
                                     printf("해당 ISBN에 해당하는 도서를 찾을 수 없습니다.\n");
                                 }
+                                int go=0;
+                                read(client_socket, &go, sizeof(go));
+                                break;
                             }
                             if (received_choice == 4)
                             {
@@ -2172,12 +2129,12 @@ void *client_handler(void *arg) {
                             }
                         }
                     }
-                    else if(strcmp(action, "3") == 0)  //불량 대출자 구제
+                    else if(strcmp(action, "3") == 0)   //불량 대출자 구제
                     {
                         save_bull(Users);
                         break;
                     }
-                    else if(strcmp(action, "4") == 0)  //대출목록수정
+                    else if(strcmp(action, "4") == 0)   //대출목록수정
                     {
                         Book2 b;
                         int num_1 = 0;    //오류 측정용 변수

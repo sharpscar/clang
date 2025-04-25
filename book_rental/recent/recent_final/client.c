@@ -237,8 +237,10 @@ void general_client(int sock, char *id, int *plag_exit) {
         printf("****[ %s ]*****\n", id);
         User user_info;
 
+        //send 1: char id
         send(sock, id, sizeof(id), 0);
         
+        //read 2: user_info ( id, name, age, phone, addr )
         //서버로부터 응답을 받음
         read(sock, user_info.id, sizeof(user_info.id));
         read(sock, user_info.name, sizeof(user_info.name));
@@ -246,57 +248,61 @@ void general_client(int sock, char *id, int *plag_exit) {
         read(sock, user_info.phone, sizeof(user_info.phone));
         read(sock, user_info.addr, sizeof(user_info.addr));
         int d_count = 0;
+
+        //read 3 : d_count ( d_count )
         read(sock, &d_count, sizeof(int));             //1. 멀록카운트
         Book2 *d_results = malloc(sizeof(Book2)*d_count);
         memset(d_results, 0, sizeof(Book2)*d_count);
+
+        if(d_count>0) {
+            for (int i=0;i<d_count;i++) {
+                read(sock, &d_results[i], sizeof(Book2));  //2.대출목록
+                // printf("%s\n", d_results[i].title);
+            }
+        }
+
         char cmd[16];
         int num = 0;
         printf("[1]내정보확인하기\n[2]온라인대출하기\n[3]메세지보내기\n[4]로그아웃\n>>");
         fgets(cmd, sizeof(cmd), stdin);
         cmd[strcspn(cmd, "\n")] = 0;
-        send(sock, cmd, sizeof(cmd), 0);
-        if (strcmp(cmd,"1") == 0)
-        {
-            User user_info;
 
-            send(sock, id, sizeof(id), 0);
-            
-            //서버로부터 응답을 받음
-            read(sock, user_info.id, sizeof(user_info.id));
-            read(sock, user_info.name, sizeof(user_info.name));
-            read(sock, &user_info.age, sizeof(int));
-            read(sock, user_info.phone, sizeof(user_info.phone));
-            read(sock, user_info.addr, sizeof(user_info.addr));
+        //send 2 : char cmd (action )
+        send(sock, cmd, sizeof(cmd), 0);
+
+        if (strcmp(cmd,"1") == 0)                   //1. 정보보기
+        {
+            int go=0;
+            CLEAR
+
+            //read 1 : int book_2_count
             
 
             printf("id :%s\n",id);
             printf("유저명 :%s\n",user_info.name);
             printf("나이 :%d\n",user_info.age);
             printf("전화번호 :%s\n",user_info.phone);
-            printf("주소 :%s\n\n",user_info.addr);
+            printf("주소 :%s\n",user_info.addr);
+
+            if(user_info.bsc == 1) printf("불량대출자\n");        
 
             //내 정보를 화면에 출력 + 내 대출목록 
-            printf("대출목록\n");
-            int count_4 = 0;
-            read(sock, &count_4, sizeof(int));
-            Book2 *p_results = NULL;
-            p_results = malloc(sizeof(Book2)*count_4);
-                if (count_4>0)
-                {
-                    for (int i = 0; i < count_4; i++)
-                    {
-                        read(sock, &p_results[i], sizeof(Book2));
-                    }
-                    for(int i = 0;i<count_4;i++){
-                        if(strcmp(p_results[i].id,id) == 0){
-                        printf("ID.%s 제목 : %s 저자 : %s 출판사 : %s 출판년 : %d 권 : %d ISBN %s 대출시간: %d 상태 : %s 주소 : %s\n",p_results[i].id, p_results[i].title, p_results[i].author,
-                        p_results[i].publisher, p_results[i].pub_year,p_results[i].num_books,p_results[i].isbn,p_results[i].loan_time,p_results[i].status,p_results[i].loan_addr);
-                        }
-                    }
-                    free(p_results);
+            printf("d_count: %d\n", d_count);
+            if(d_count>0) {
+                for(int i = 0;i<d_count;i++){
+                    // if(strcmp(d_results[i].id,id) == 0){
+                    printf("ID.%s 제목 : %s 저자 : %s 출판사 : %s 출판년 : %d 권 : %d ISBN %s 대출시간: %d 상태 : %s 주소 : %s\n",d_results[i].id, d_results[i].title, d_results[i].author,
+                    d_results[i].publisher, d_results[i].pub_year,d_results[i].num_books,d_results[i].isbn,d_results[i].loan_time,d_results[i].status,d_results[i].loan_addr);
+                    // }
                 }
-                else 
-                    printf("대출한 도서가없습니다.");
+            } else  {
+                printf("대출한 도서가없습니다.");
+            }
+
+            PRESSENTER
+            send(sock, &go, sizeof(go), 0);
+            free(d_results);
+            continue;
         }
         else if (strcmp(cmd, "2") == 0)
         {
@@ -514,7 +520,6 @@ void general_client(int sock, char *id, int *plag_exit) {
             free(d_results);
             d_results = NULL;
             *plag_exit = 1;
-            break;
         }
         d_results = NULL;
         free(d_results);
@@ -1180,7 +1185,7 @@ void librarian(int sock, char *id, int *plag_exit) {
         cmd[strcspn(cmd, "\n")] = 0;
         send(sock, cmd, sizeof(cmd), 0);
 
-        if (strcmp(cmd, "1") == 0) // 도서관리
+        if (strcmp(cmd, "1") == 0)      // 도서관리
         {  
             CLEAR
             printf("*****[ Manage Books ]*****\n");
@@ -1253,7 +1258,7 @@ void librarian(int sock, char *id, int *plag_exit) {
                 break;
             }
         }
-        else if (strcmp(cmd, "2") == 0) // 대출정보 //eh
+        else if (strcmp(cmd, "2") == 0) // 대출정보
         {
             while(1)
             {
@@ -1267,24 +1272,27 @@ void librarian(int sock, char *id, int *plag_exit) {
                 int hour = timeinfo->tm_hour;
                 int minute = timeinfo->tm_min;
 
-
                 // 운영시간: 08:00 ~ 17:59
-                if (hour >= 8 && hour < 18) {
+                if (hour >= 8 && hour < 24) {
                     // printf("운영 중입니다.\n");
                 } else {
                     printf("마감 시간입니다.\n");
                     break;
                 }
+
                 CLEAR
                 char loan_id[50] = {0};
                 int num_1 = 0;  //오류 분석용
                 int d_num = 0;  //대출 목록 번호
                 int d_count = 0;
+
+                //read 1 : d_count ( book_2_count )
                 read(sock, &d_count, sizeof(int));             //1. 멀록카운트
                 Book2 *d_results = malloc(sizeof(Book2)*d_count);
                 memset(d_results, 0, sizeof(Book2)*d_count);
-                for (int i=0;i<d_count;i++)                     
-                {
+                
+                //read 2 : d_results[i] ( book_2s[i] )
+                for (int i=0;i<d_count;i++) {
                     read(sock, &d_results[i], sizeof(Book2));  //2.대출목록
                     printf("[%d] 대출일:%ld | 상태:%s | 대출자ID:%s | 제목: %s | 권수: %d | ISBN: %s | 주소: %s\n" 
                         ,i+1, d_results[i].loan_time, d_results[i].status, d_results[i].id, d_results[i].title, d_results[i].num_books, d_results[i].isbn, d_results[i].loan_addr);
@@ -1293,35 +1301,32 @@ void librarian(int sock, char *id, int *plag_exit) {
                 printf("[1]대출승인\n[2]도서반납\n[3]불량대출자구제\n[4]대출목록수정\n");
                 fgets(cmd, sizeof(cmd), stdin);
                 cmd[strlen(cmd) - 1] = '\0';
+
+                //send 3 : cmd
                 write(sock, cmd, sizeof(cmd));
 
-                if(strcmp(cmd, "1") == 0) //대출승인
+                if(strcmp(cmd, "1") == 0)       //대출승인
                 {
+                    CLEAR
+                    printf("***** [대출승인] *****\n");
                     printf("[1]온라인대출승인\n[2]현장대출승인\n");
                     fgets(cmd, sizeof(cmd), stdin);
                     cmd[strlen(cmd) - 1] = '\0';
+
+                    //send 1 : cmd ( action )
                     write(sock, cmd, sizeof(cmd));
+
                     if(strcmp(cmd, "1") == 0)             //온라인 대출승인
                     {
-                        // printf("대출 승인할 번호를 입력해주세요: \n");
-                        // num_1 = scanf("%d", &d_num); 
-                        // getchar();
-                        // write(sock, &num_1, sizeof(int));  //오류분석
-                        // write(sock, &d_num, sizeof(int));    //대출 목록 번호
-                        // if (num_1== 0 || d_num >d_count || d_num < 0)
-                        // {
-                        //     printf("목록에서 해당 도서의 []안의 숫자를 입력해 주세요.\n");
-                        //     getchar();
-                        //     d_results = NULL;
-                        //     free(d_results);
-                        //     d_results = NULL;
-                        //     continue;
-                        // }
                         printf("대출 승인할 ID를 입력해 주세요.\n");
                         fgets(loan_id, sizeof(loan_id), stdin);
                         loan_id[strlen(loan_id) - 1] = '\0';
+
+                        //send 2 : loan_id
                         write(sock, loan_id, sizeof(loan_id));
                         int d_msg=0; //오류 메시지 확인용
+
+                        //read 3 : d_msg
                         read(sock, &d_msg, sizeof(int));
                         if(d_msg == 1)
                         {
@@ -1401,12 +1406,14 @@ void librarian(int sock, char *id, int *plag_exit) {
                     }
 
                 }
-                else if(strcmp(cmd, "2") == 0) //도서반납
+                else if(strcmp(cmd, "2") == 0)  //도서반납
                 {
                     char isbn[50];
                     int found = 0;
                     printf("반납할 ISBN을 입력해주세요.\n");
                     scanf("%s", isbn);
+
+                    //send 1
                     send(sock, isbn, sizeof(isbn), 0);
                 
                     for (int i = 0; i < d_count; i++) 
@@ -1430,6 +1437,10 @@ void librarian(int sock, char *id, int *plag_exit) {
                     if (!found) {
                         printf("해당 ISBN에 해당하는 도서를 찾을 수 없습니다.\n");
                     }
+                    PRESSENTER
+                    int go=0;
+                    send(sock, &go, sizeof(go),0);
+                    break;
                 }
                 else if(strcmp(cmd, "3") == 0)  //불량 대출자 구제
                 {
@@ -1500,6 +1511,7 @@ void librarian(int sock, char *id, int *plag_exit) {
         }
         else if (strcmp(cmd, "3") == 0) // 모든계정관리
         {
+            CLEAR
             int count_2 = 0;
             read(sock, &count_2, sizeof(int));
             User *all_2 = NULL;
@@ -1525,6 +1537,8 @@ void librarian(int sock, char *id, int *plag_exit) {
             else
             printf("검색 결과가 없습니다.\n");
             free(all_2);
+
+            PRESSENTER
         }
         else if (strcmp(cmd, "4") == 0) // 메세지
         {
@@ -2088,9 +2102,9 @@ void client_message(int sock, char *user_id) {
                 // printf("num: %d\n", num);
                 // printf("form: %s\n", form);
 
-                int rk;
+                int rk=0;
                 int result= 0;
-
+                int go=0;
                 if (strcmp(form, "k")==0 ) {             //메세지 삭제하기
                     
                     // send 2: int rk
@@ -2109,9 +2123,11 @@ void client_message(int sock, char *user_id) {
                             if (result== 0) {
                                 printf("[system] '%s'를 삭제하였습니다.\n", file_name[i]);
                                 PRESSENTER
+                                send(sock, &go, sizeof(go), 0);
                             } else if (result== 1) {
                                 printf("[system] '%s'를 삭제하는 데 실패했습니다.", file_name[i]);
                                 PRESSENTER
+                                send(sock, &go, sizeof(go), 0);
                             }
                             break;
                         }
@@ -2127,6 +2143,8 @@ void client_message(int sock, char *user_id) {
                     send(sock, &rk, sizeof(rk), 0);
                     printf("잘못된 입력입니다.\n");
                     PRESSENTER
+
+                    send(sock, &go, sizeof(go), 0);
                     continue;
                 }
                 
